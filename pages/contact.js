@@ -34,8 +34,8 @@ export default function Contact() {
   return (
     <>
       <Head>
-        <title>Contact - Code & Knit</title>
-        <meta name="description" content="Get in touch with Code & Knit" />
+        <title>Contact - Code & Felt</title>
+        <meta name="description" content="Get in touch with Code & Felt" />
       </Head>
       
       <div className="min-h-screen bg-gradient-to-b from-pink-50 to-blue-50 py-20">
@@ -124,7 +124,7 @@ export default function Contact() {
                 📧
               </div>
               <h3 className="font-serif text-lg font-bold text-gray-800 mb-2">Email Us</h3>
-              <p className="text-gray-600">hello@codeandknit.com</p>
+              <p className="text-gray-600">hello@codeandfelt.com</p>
             </div>
             
             <div className="bg-white rounded-3xl shadow-md p-6 text-center">
