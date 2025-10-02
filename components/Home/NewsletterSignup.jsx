@@ -18,7 +18,7 @@ const NewsletterSignup = () => {
           Stay in the Loop
         </h2>
         <p className="text-xl text-gray-600 mb-8">
-          Get the latest patterns, tutorials, and data knitting inspiration.
+          Get the latest patterns, tutorials, and data felting inspiration.
         </p>
         <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto">
           <input

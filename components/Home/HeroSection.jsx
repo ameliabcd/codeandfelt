@@ -8,11 +8,11 @@ const HeroSection = () => {
           <h1 className="font-serif text-5xl md:text-7xl font-bold text-gray-800 mb-6 leading-tight">
             Turn Data Into
             <span className="text-gradient">
-              {" "}Knitting Patterns
+              {" "}Felting Patterns
             </span>
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8 leading-relaxed">
-            Transform your spreadsheets, APIs, and data files into beautiful, knittable patterns. 
+            Transform your spreadsheets, APIs, and data files into beautiful, feltable patterns. 
             Where code meets craft, and data becomes art.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">

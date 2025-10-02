@@ -23,15 +23,15 @@ export default function Generator() {
   return (
     <>
       <Head>
-        <title>Pattern Generator - Code & Knit</title>
-        <meta name="description" content="Transform your data into beautiful knitting patterns" />
+        <title>Pattern Generator - Code & Felt</title>
+        <meta name="description" content="Transform your data into beautiful felting patterns" />
       </Head>
       
       <div className="min-h-screen bg-gradient-to-b from-blue-50 to-pink-50 py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h1 className="font-serif text-5xl font-bold text-gray-800 mb-4">Pattern Generator</h1>
-            <p className="text-xl text-gray-600">Transform your data into beautiful knitting patterns</p>
+            <p className="text-xl text-gray-600">Transform your data into beautiful felting patterns</p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

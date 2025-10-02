@@ -8,8 +8,8 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>Code & Knit - Turn Data Into Knitting Patterns</title>
-        <meta name="description" content="Transform your spreadsheets, APIs, and data files into beautiful, knittable patterns." />
+        <title>Code & Felt - Turn Data Into Felting Patterns</title>
+        <meta name="description" content="Transform your spreadsheets, APIs, and data files into beautiful, feltable patterns." />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>

@@ -14,7 +14,7 @@ export default function Gallery() {
   return (
     <>
       <Head>
-        <title>Pattern Gallery - Code & Knit</title>
+        <title>Pattern Gallery - Code & Felt</title>
         <meta name="description" content="Discover patterns created by our community" />
       </Head>
       

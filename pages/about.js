@@ -5,8 +5,8 @@ export default function About() {
   return (
     <>
       <Head>
-        <title>About & Blog - Code & Knit</title>
-        <meta name="description" content="Learn about Code & Knit and read our latest blog posts" />
+        <title>About & Blog - Code & Felt</title>
+        <meta name="description" content="Learn about Code & Felt and read our latest blog posts" />
       </Head>
       
       <div className="min-h-screen bg-white py-20">
@@ -16,7 +16,7 @@ export default function About() {
             <div>
               <h1 className="font-serif text-5xl font-bold text-gray-800 mb-6">Our Story</h1>
               <p className="text-xl text-gray-600 mb-6 leading-relaxed">
-                Code & Knit was born from the intersection of two passions: data science and fiber arts. 
+                Code & Felt was born from the intersection of two passions: data science and fiber arts. 
                 We believe that data can be beautiful, tactile, and deeply personal.
               </p>
               <p className="text-lg text-gray-600 leading-relaxed">
@@ -37,7 +37,7 @@ export default function About() {
                 <h2 className="font-serif text-3xl font-bold text-gray-800 mb-4">Our Mission</h2>
                 <p className="text-gray-600 leading-relaxed">
                   To make data accessible, beautiful, and meaningful by transforming it into 
-                  knittable art that tells personal and collective stories.
+                  feltable art that tells personal and collective stories.
                 </p>
               </div>
               <div>
