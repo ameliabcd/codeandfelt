@@ -4,6 +4,7 @@ import Head from 'next/head'
 import { Upload, Download, Code, Palette, Image } from 'lucide-react'
 import FractalPatternGenerator from '../components/Generator/FractalPatternGenerator'
 import ContinuousPatternGenerator from '../components/Generator/ContinuousPatternGenerator'
+import { colorPalettes } from '../lib/data'
 
 export default function Generator() {
   const [uploadedFile, setUploadedFile] = useState(null)
@@ -11,7 +12,20 @@ export default function Generator() {
   const [currentPattern, setCurrentPattern] = useState(null)
   const [patternMode, setPatternMode] = useState('data') // 'data', 'fractal', or 'continuous'
 
-  const colorOptions = ['#FCE4EC', '#E3F2FD', '#FFE0B2', '#FFF9F5', '#F3E5F5', '#E8F5E8']
+  const colorOptions = [
+    // Light pastels (original)
+    '#FCE4EC', '#E3F2FD', '#FFE0B2', '#FFF9F5', '#F3E5F5', '#E8F5E8',
+    // Deep jewel tones
+    '#1A237E', '#4A148C', '#B71C1C', '#1B5E20', '#E65100', '#3E2723',
+    // Rich colors
+    '#2E7D32', '#C62828', '#6A1B9A', '#F57C00', '#5D4037', '#455A64',
+    // Deep ocean & forest
+    '#0D47A1', '#004D40', '#1565C0', '#00695C', '#2E7D32', '#558B2F',
+    // Warm deep tones
+    '#D84315', '#F4511E', '#FF8F00', '#FFA000', '#AFB42B', '#689F38',
+    // Cool deep tones
+    '#283593', '#303F9F', '#3949AB', '#3F51B5', '#5C6BC0', '#7986CB'
+  ]
 
   const handleColorToggle = (color) => {
     const newColors = [...selectedColors]
@@ -22,6 +36,10 @@ export default function Generator() {
       newColors.push(color)
     }
     setSelectedColors(newColors)
+  }
+
+  const applyPalette = (paletteName) => {
+    setSelectedColors([...colorPalettes[paletteName]])
   }
 
   return (
@@ -195,29 +213,93 @@ export default function Generator() {
             {/* Color Palette */}
             <div className="bg-white rounded-3xl shadow-lg p-8">
               <h2 className="font-serif text-2xl font-bold text-gray-800 mb-6">Color Palette</h2>
-              <div className="space-y-4">
-                {colorOptions.map((color, idx) => (
-                  <div
-                    key={idx}
-                    onClick={() => handleColorToggle(color)}
-                    className={`w-full h-12 rounded-xl cursor-pointer border-4 transition-all ${
-                      selectedColors.includes(color) ? 'border-gray-800 scale-105' : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                    style={{ backgroundColor: color }}
-                  />
-                ))}
+              
+              {/* Preset Palettes */}
+              <div className="mb-6">
+                <h3 className="font-medium text-gray-700 mb-3">Preset Palettes:</h3>
+                <div className="grid grid-cols-2 gap-2 mb-4">
+                  {Object.entries(colorPalettes).slice(0, 8).map(([name, colors]) => (
+                    <button
+                      key={name}
+                      onClick={() => applyPalette(name)}
+                      className="flex items-center gap-2 p-2 rounded-lg border border-gray-200 hover:border-gray-300 transition-all text-sm"
+                    >
+                      <div className="flex gap-1">
+                        {colors.map((color, idx) => (
+                          <div
+                            key={idx}
+                            className="w-3 h-3 rounded-full border border-white"
+                            style={{ backgroundColor: color }}
+                          />
+                        ))}
+                      </div>
+                      <span className="capitalize text-gray-600">{name.replace('_', ' ')}</span>
+                    </button>
+                  ))}
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {Object.entries(colorPalettes).slice(8).map(([name, colors]) => (
+                    <button
+                      key={name}
+                      onClick={() => applyPalette(name)}
+                      className="flex items-center gap-2 p-2 rounded-lg border border-gray-200 hover:border-gray-300 transition-all text-sm"
+                    >
+                      <div className="flex gap-1">
+                        {colors.map((color, idx) => (
+                          <div
+                            key={idx}
+                            className="w-3 h-3 rounded-full border border-white"
+                            style={{ backgroundColor: color }}
+                          />
+                        ))}
+                      </div>
+                      <span className="capitalize text-gray-600">{name.replace('_', ' ')}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Individual Colors */}
+              <div className="mb-6">
+                <h3 className="font-medium text-gray-700 mb-3">Individual Colors:</h3>
+                <div className="grid grid-cols-6 gap-2">
+                  {colorOptions.map((color, idx) => (
+                    <div
+                      key={idx}
+                      onClick={() => handleColorToggle(color)}
+                      className={`aspect-square rounded-lg cursor-pointer border-2 transition-all ${
+                        selectedColors.includes(color) ? 'border-gray-800 scale-110' : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                      style={{ backgroundColor: color }}
+                      title={color}
+                    />
+                  ))}
+                </div>
               </div>
               
-              <div className="mt-6">
-                <h3 className="font-medium text-gray-700 mb-3">Selected Colors:</h3>
-                <div className="flex gap-2">
+              {/* Selected Colors */}
+              <div>
+                <h3 className="font-medium text-gray-700 mb-3">Selected Colors ({selectedColors.length}/4):</h3>
+                <div className="flex gap-2 flex-wrap">
                   {selectedColors.map((color, idx) => (
                     <div
                       key={idx}
-                      className="w-8 h-8 rounded-full border-2 border-white shadow-md"
-                      style={{ backgroundColor: color }}
-                    />
+                      className="relative group"
+                    >
+                      <div
+                        className="w-10 h-10 rounded-lg border-2 border-white shadow-md cursor-pointer"
+                        style={{ backgroundColor: color }}
+                        onClick={() => handleColorToggle(color)}
+                        title={`Remove ${color}`}
+                      />
+                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        ×
+                      </div>
+                    </div>
                   ))}
+                  {selectedColors.length === 0 && (
+                    <p className="text-gray-500 text-sm italic">Click colors above to select up to 4 colors</p>
+                  )}
                 </div>
               </div>
             </div>
