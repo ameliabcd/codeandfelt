@@ -1,14 +1,15 @@
 'use client'
 import { useState } from 'react'
 import Head from 'next/head'
-import { Upload, Download, Code, Palette } from 'lucide-react'
+import { Upload, Download, Code, Palette, Image } from 'lucide-react'
 import FractalPatternGenerator from '../components/Generator/FractalPatternGenerator'
+import ContinuousPatternGenerator from '../components/Generator/ContinuousPatternGenerator'
 
 export default function Generator() {
   const [uploadedFile, setUploadedFile] = useState(null)
   const [selectedColors, setSelectedColors] = useState(['#FCE4EC', '#E3F2FD', '#FFE0B2'])
   const [currentPattern, setCurrentPattern] = useState(null)
-  const [patternMode, setPatternMode] = useState('data') // 'data' or 'fractal'
+  const [patternMode, setPatternMode] = useState('data') // 'data', 'fractal', or 'continuous'
 
   const colorOptions = ['#FCE4EC', '#E3F2FD', '#FFE0B2', '#FFF9F5', '#F3E5F5', '#E8F5E8']
 
@@ -42,7 +43,7 @@ export default function Generator() {
                 <div className="flex">
                   <button
                     onClick={() => setPatternMode('data')}
-                    className={`px-6 py-3 rounded-xl font-medium transition-all ${
+                    className={`px-4 py-3 rounded-xl font-medium transition-all ${
                       patternMode === 'data'
                         ? 'bg-blue-500 text-white shadow-md'
                         : 'text-gray-600 hover:text-gray-800'
@@ -53,14 +54,25 @@ export default function Generator() {
                   </button>
                   <button
                     onClick={() => setPatternMode('fractal')}
-                    className={`px-6 py-3 rounded-xl font-medium transition-all ${
+                    className={`px-4 py-3 rounded-xl font-medium transition-all ${
                       patternMode === 'fractal'
                         ? 'bg-blue-500 text-white shadow-md'
                         : 'text-gray-600 hover:text-gray-800'
                     }`}
                   >
                     <Palette className="w-4 h-4 inline mr-2" />
-                    Fractal Patterns
+                    Fractal Grid
+                  </button>
+                  <button
+                    onClick={() => setPatternMode('continuous')}
+                    className={`px-4 py-3 rounded-xl font-medium transition-all ${
+                      patternMode === 'continuous'
+                        ? 'bg-blue-500 text-white shadow-md'
+                        : 'text-gray-600 hover:text-gray-800'
+                    }`}
+                  >
+                    <Image className="w-4 h-4 inline mr-2" />
+                    Smooth Patterns
                   </button>
                 </div>
               </div>
@@ -143,7 +155,7 @@ export default function Generator() {
                     )}
                   </div>
                 </>
-              ) : (
+              ) : patternMode === 'fractal' ? (
                 <>
                   {/* Fractal Pattern Generator */}
                   <FractalPatternGenerator 
@@ -171,6 +183,12 @@ export default function Generator() {
                     </div>
                   )}
                 </>
+              ) : (
+                /* Continuous Pattern Generator */
+                <ContinuousPatternGenerator 
+                  selectedColors={selectedColors}
+                  onPatternGenerated={setCurrentPattern}
+                />
               )}
             </div>
 
