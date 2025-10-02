@@ -141,11 +141,11 @@ export default function Generator() {
                     <div className="bg-gradient-to-br from-pink-50 to-blue-50 rounded-2xl p-8 min-h-96 flex items-center justify-center">
                       {uploadedFile ? (
                         <div className="text-center">
-                          <div className="grid grid-cols-10 gap-1 mb-6">
+                          <div className="grid grid-cols-10 gap-0 mb-6 border border-gray-200 inline-block">
                             {Array.from({ length: 100 }, (_, i) => (
                               <div
                                 key={i}
-                                className="w-4 h-4 rounded-sm"
+                                className="w-4 h-4"
                                 style={{
                                   backgroundColor: selectedColors[i % selectedColors.length],
                                   opacity: 0.8 + (Math.random() * 0.2)
