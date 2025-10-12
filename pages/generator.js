@@ -98,9 +98,9 @@ export default function Generator() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className={`grid grid-cols-1 gap-8 ${patternMode === 'data' ? '' : 'lg:grid-cols-3'}`}>
             {/* Main Content Area */}
-            <div className="lg:col-span-2 space-y-6">
+            <div className={`space-y-6 ${patternMode === 'data' ? '' : 'lg:col-span-2'}`}>
               {patternMode === 'data' ? (
                 <>
                   {/* Data Pattern Generator */}
@@ -146,9 +146,10 @@ export default function Generator() {
               )}
             </div>
 
-            {/* Color Palette */}
-            <div className="bg-white rounded-3xl shadow-lg p-8">
-              <h2 className="font-serif text-2xl font-bold text-gray-800 mb-6">Color Palette</h2>
+            {/* Color Palette - Hidden for Data Pattern mode */}
+            {patternMode !== 'data' && (
+              <div className="bg-white rounded-3xl shadow-lg p-8">
+                <h2 className="font-serif text-2xl font-bold text-gray-800 mb-6">Color Palette</h2>
               
               {/* Preset Palettes */}
               <div className="mb-6">
@@ -238,7 +239,8 @@ export default function Generator() {
                   )}
                 </div>
               </div>
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
