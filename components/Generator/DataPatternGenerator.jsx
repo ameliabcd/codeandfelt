@@ -23,7 +23,7 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
   const [parsedData, setParsedData] = useState(null)
   const [pattern, setPattern] = useState(null)
   const [stats, setStats] = useState(null)
-  const [patternSize, setPatternSize] = useState(30)
+  const [patternSize, setPatternSize] = useState(40)
   const [showStats, setShowStats] = useState(false)
   const [fractalType, setFractalType] = useState('mandelbrot')
   const [fractalParams, setFractalParams] = useState(null)
@@ -86,8 +86,8 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
         const params = dataToFractalParams(parsed)
         setFractalParams(params)
         
-        // Generate colors from data
-        const colors = generateDataColors(parsed, 4)
+        // Generate colors from data (more colors for better fractal visualization)
+        const colors = generateDataColors(parsed, 6)
         setDataColors(colors)
       }
     } catch (error) {
@@ -231,8 +231,8 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
     const params = dataToFractalParams(sampleData)
     setFractalParams(params)
     
-    // Generate colors from data
-    const colors = generateDataColors(sampleData, 4)
+    // Generate colors from data (more colors for better fractal visualization)
+    const colors = generateDataColors(sampleData, 6)
     setDataColors(colors)
   }
 
@@ -475,14 +475,14 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
             </label>
             <input
               type="range"
-              min="20"
-              max="50"
+              min="30"
+              max="60"
               value={patternSize}
               onChange={(e) => setPatternSize(parseInt(e.target.value))}
               className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
             />
             <p className="text-xs text-gray-500 mt-2">
-              Larger sizes show more fractal detail but take longer to generate
+              Larger sizes show more fractal detail (recommended: 40-50)
             </p>
           </div>
         </div>
