@@ -2,7 +2,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Download, BarChart3, Settings, Grid, Sparkles } from 'lucide-react'
 import FileUpload from './FileUpload'
-import { parseCSV, parseJSON, parseText, dataToPattern, generateDataStats, dataToFractalParams } from '../../lib/dataParser'
+import { parseCSV, parseJSON, parseText, dataToPattern, generateDataStats, dataToFractalParams, generateDataColors } from '../../lib/dataParser'
 import { generateMandelbrot, generateJulia, generateSierpinski, fractalToColors } from '../../lib/fractals'
 
 export default function DataPatternGenerator({ selectedColors, onPatternGenerated }) {
@@ -14,6 +14,7 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
   const [showStats, setShowStats] = useState(false)
   const [fractalType, setFractalType] = useState('mandelbrot')
   const [fractalParams, setFractalParams] = useState(null)
+  const [dataColors, setDataColors] = useState(null)
 
   const fractalTypes = [
     { id: 'mandelbrot', name: 'Mandelbrot Set', icon: '🌀', description: 'Classic fractal boundaries' },
@@ -61,6 +62,10 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
         // Extract fractal parameters from data
         const params = dataToFractalParams(parsed)
         setFractalParams(params)
+        
+        // Generate colors from data
+        const colors = generateDataColors(parsed, 4)
+        setDataColors(colors)
       }
     } catch (error) {
       console.error('Error parsing file:', error)
@@ -69,7 +74,7 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
 
   // Generate fractal pattern from data
   useEffect(() => {
-    if (parsedData && selectedColors.length > 0 && fractalParams) {
+    if (parsedData && fractalParams && dataColors) {
       try {
         let fractalPattern
         
@@ -107,8 +112,8 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
             fractalPattern = generateMandelbrot(patternSize, patternSize, 100, 1, 0, 0)
         }
         
-        // Convert fractal to colors
-        const colorPattern = fractalToColors(fractalPattern, selectedColors, false)
+        // Convert fractal to colors using data-generated colors
+        const colorPattern = fractalToColors(fractalPattern, dataColors, false)
         setPattern(colorPattern)
         
         // Pass pattern to parent
@@ -119,7 +124,7 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
         console.error('Error generating fractal pattern:', error)
       }
     }
-  }, [parsedData, selectedColors, patternSize, fractalType, fractalParams])
+  }, [parsedData, dataColors, patternSize, fractalType, fractalParams])
 
   // Generate random sample data
   const generateSampleData = () => {
@@ -138,6 +143,10 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
     // Extract fractal parameters
     const params = dataToFractalParams(sampleData)
     setFractalParams(params)
+    
+    // Generate colors from data
+    const colors = generateDataColors(sampleData, 4)
+    setDataColors(colors)
   }
 
   // Download pattern as PNG
@@ -279,6 +288,30 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
                 These fractal parameters are automatically calculated from your data columns
               </p>
             </div>
+            
+            {dataColors && (
+              <div className="p-4 bg-gradient-to-r from-pink-50 to-purple-50 rounded-xl">
+                <h3 className="font-medium text-gray-800 mb-3 flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-pink-500" />
+                  Data-Generated Color Palette
+                </h3>
+                <div className="flex gap-3 items-center">
+                  {dataColors.map((color, idx) => (
+                    <div key={idx} className="flex-1">
+                      <div
+                        className="w-full h-12 rounded-lg shadow-md border-2 border-white"
+                        style={{ backgroundColor: color }}
+                        title={color}
+                      />
+                      <p className="text-xs text-gray-600 mt-1 text-center font-mono">{color}</p>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-500 mt-3">
+                  🎨 Colors automatically generated from your data values (hue, saturation, lightness)
+                </p>
+              </div>
+            )}
           </div>
         )}
       </div>
