@@ -3,7 +3,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { Download, BarChart3, Settings, Grid, Sparkles } from 'lucide-react'
 import FileUpload from './FileUpload'
 import { parseCSV, parseJSON, parseText, dataToPattern, generateDataStats, dataToFractalParams, generateDataColors } from '../../lib/dataParser'
-import { generateMandelbrot, generateJulia, generateSierpinski, fractalToColors } from '../../lib/fractals'
+import { generateMandelbrot, generateJulia, generateSierpinski, generateKochSnowflake, fractalToColors } from '../../lib/fractals'
 import { 
   generateGradient, 
   generateRandomGrid, 
@@ -34,6 +34,7 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
     { id: 'mandelbrot', name: 'Mandelbrot', icon: '🌀', description: 'Fractal boundaries', category: 'fractal' },
     { id: 'julia', name: 'Julia Set', icon: '✨', description: 'Complex iterations', category: 'fractal' },
     { id: 'sierpinski', name: 'Sierpinski', icon: '🔺', description: 'Geometric recursion', category: 'fractal' },
+    { id: 'koch', name: 'Koch Snowflake', icon: '❄️', description: 'Recursive snowflake', category: 'fractal' },
     // Geometric Patterns
     { id: 'gradient', name: 'Gradient', icon: '🌈', description: 'Linear gradient', category: 'geometric' },
     { id: 'spiral', name: 'Spiral Wave', icon: '🌊', description: 'Radial waves', category: 'geometric' },
@@ -131,6 +132,12 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
               Math.floor(fractalParams.maxIterations / 10)
             )
             break
+          case 'koch':
+            rawPattern = generateKochSnowflake(
+              patternSize, patternSize,
+              Math.floor(3 + (fractalParams.maxIterations / 50)) // 3-7 iterations
+            )
+            break
           
           // Geometric Patterns
           case 'gradient':
@@ -197,7 +204,7 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
         }
         
         // Convert pattern to colors using data-generated colors
-        const colorPattern = ['mandelbrot', 'julia', 'sierpinski'].includes(fractalType)
+        const colorPattern = ['mandelbrot', 'julia', 'sierpinski', 'koch'].includes(fractalType)
           ? fractalToColors(rawPattern, dataColors, false)
           : patternToColors(rawPattern, dataColors)
         
@@ -413,8 +420,8 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
           
           {/* Fractals Section */}
           <div className="mb-6">
-            <h4 className="text-sm font-semibold text-gray-700 mb-3">🌀 Fractal Patterns</h4>
-            <div className="grid grid-cols-3 gap-3">
+            <h4 className="text-sm font-semibold text-gray-700 mb-3">🌀 Fractal Patterns (4 types)</h4>
+            <div className="grid grid-cols-4 gap-3">
               {patternTypes.filter(t => t.category === 'fractal').map((type) => (
                 <button
                   key={type.id}
