@@ -1,0 +1,18 @@
+[
+  { "day": 1, "steps": 8432, "calories": 2156, "active_minutes": 45 },
+  { "day": 2, "steps": 9214, "calories": 2298, "active_minutes": 52 },
+  { "day": 3, "steps": 7651, "calories": 2034, "active_minutes": 38 },
+  { "day": 4, "steps": 10234, "calories": 2445, "active_minutes": 61 },
+  { "day": 5, "steps": 8756, "calories": 2189, "active_minutes": 47 },
+  { "day": 6, "steps": 11432, "calories": 2634, "active_minutes": 73 },
+  { "day": 7, "steps": 9876, "calories": 2367, "active_minutes": 56 },
+  { "day": 8, "steps": 8234, "calories": 2134, "active_minutes": 44 },
+  { "day": 9, "steps": 9543, "calories": 2312, "active_minutes": 54 },
+  { "day": 10, "steps": 10789, "calories": 2523, "active_minutes": 65 },
+  { "day": 11, "steps": 8912, "calories": 2223, "active_minutes": 49 },
+  { "day": 12, "steps": 9234, "calories": 2289, "active_minutes": 53 },
+  { "day": 13, "steps": 10456, "calories": 2478, "active_minutes": 62 },
+  { "day": 14, "steps": 11234, "calories": 2598, "active_minutes": 70 },
+  { "day": 15, "steps": 9876, "calories": 2367, "active_minutes": 56 }
+]
+

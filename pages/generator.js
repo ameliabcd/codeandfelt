@@ -4,6 +4,7 @@ import Head from 'next/head'
 import { Upload, Download, Code, Palette, Image } from 'lucide-react'
 import FractalPatternGenerator from '../components/Generator/FractalPatternGenerator'
 import ContinuousPatternGenerator from '../components/Generator/ContinuousPatternGenerator'
+import DataPatternGenerator from '../components/Generator/DataPatternGenerator'
 import { colorPalettes } from '../lib/data'
 
 export default function Generator() {
@@ -102,76 +103,11 @@ export default function Generator() {
             <div className="lg:col-span-2 space-y-6">
               {patternMode === 'data' ? (
                 <>
-                  {/* File Upload */}
-                  <div className="bg-white rounded-3xl shadow-lg p-8">
-                    <h2 className="font-serif text-2xl font-bold text-gray-800 mb-6">Upload Your Data</h2>
-                    <div 
-                      className="border-2 border-dashed border-pink-200 rounded-2xl p-12 text-center hover:border-pink-300 transition-colors cursor-pointer"
-                      onClick={() => setUploadedFile('sample-data.csv')}
-                    >
-                      <Upload className="w-12 h-12 text-pink-400 mx-auto mb-4" />
-                      <p className="text-lg text-gray-600 mb-2">Drag & Drop or Upload Your Data File</p>
-                      <p className="text-sm text-gray-500">Supports CSV, JSON, Excel files</p>
-                      {uploadedFile && (
-                        <div className="mt-4 text-sm text-pink-600">
-                          ✓ {uploadedFile} uploaded successfully
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div className="flex gap-4 mt-6">
-                      <button 
-                        onClick={() => setUploadedFile('sample-data.csv')}
-                        className="btn-primary flex-1"
-                      >
-                        Generate Random Pattern
-                      </button>
-                      <button 
-                        onClick={() => setUploadedFile(null)}
-                        className="px-6 py-3 bg-gray-100 text-gray-600 rounded-2xl font-medium hover:bg-gray-200 transition-all duration-200"
-                      >
-                        Reset
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Data Pattern Preview */}
-                  <div className="bg-white rounded-3xl shadow-lg p-8">
-                    <h2 className="font-serif text-2xl font-bold text-gray-800 mb-6">Pattern Preview</h2>
-                    <div className="bg-gradient-to-br from-pink-50 to-blue-50 rounded-2xl p-8 min-h-96 flex items-center justify-center">
-                      {uploadedFile ? (
-                        <div className="text-center">
-                          <div className="grid grid-cols-10 gap-0 mb-6 border border-gray-200 inline-block">
-                            {Array.from({ length: 100 }, (_, i) => (
-                              <div
-                                key={i}
-                                className="w-4 h-4"
-                                style={{
-                                  backgroundColor: selectedColors[i % selectedColors.length],
-                                  opacity: 0.8 + (Math.random() * 0.2)
-                                }}
-                              />
-                            ))}
-                          </div>
-                          <p className="text-gray-600">Dynamic pattern based on your data</p>
-                        </div>
-                      ) : (
-                        <div className="text-center">
-                          <Code className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                          <p className="text-gray-500">Upload data to see your pattern</p>
-                        </div>
-                      )}
-                    </div>
-                    
-                    {uploadedFile && (
-                      <div className="mt-6">
-                        <button className="w-full px-6 py-3 bg-gradient-to-r from-blue-400 to-blue-500 text-white rounded-2xl font-medium hover:from-blue-500 hover:to-blue-600 transition-all duration-200 flex items-center justify-center gap-2">
-                          <Download className="w-5 h-5" />
-                          Download Pattern
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                  {/* Data Pattern Generator */}
+                  <DataPatternGenerator 
+                    selectedColors={selectedColors}
+                    onPatternGenerated={setCurrentPattern}
+                  />
                 </>
               ) : patternMode === 'fractal' ? (
                 <>
