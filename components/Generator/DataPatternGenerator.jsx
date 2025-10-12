@@ -28,6 +28,7 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
   const [fractalType, setFractalType] = useState('mandelbrot')
   const [fractalParams, setFractalParams] = useState(null)
   const [dataColors, setDataColors] = useState(null)
+  const [isGenerating, setIsGenerating] = useState(false)
 
   const patternTypes = [
     // Fractals
@@ -99,9 +100,13 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
   // Generate pattern from data
   useEffect(() => {
     if (parsedData && fractalParams && dataColors) {
-      try {
-        let rawPattern
-        const patternParams = dataToPatternParams(fractalParams)
+      // Use setTimeout to allow UI to update before heavy computation
+      setIsGenerating(true)
+      
+      setTimeout(() => {
+        try {
+          let rawPattern
+          const patternParams = dataToPatternParams(fractalParams)
         
         // Generate based on pattern type
         switch (fractalType) {
@@ -135,7 +140,7 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
           case 'koch':
             rawPattern = generateKochSnowflake(
               patternSize, patternSize,
-              Math.floor(3 + (fractalParams.maxIterations / 50)) // 3-7 iterations
+              Math.min(4, Math.floor(3 + (fractalParams.maxIterations / 100))) // 3-4 iterations max
             )
             break
           
@@ -214,9 +219,13 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
         if (onPatternGenerated) {
           onPatternGenerated(colorPattern)
         }
+        
+        setIsGenerating(false)
       } catch (error) {
         console.error('Error generating pattern:', error)
+        setIsGenerating(false)
       }
+      }, 100) // Small delay to let UI update
     }
   }, [parsedData, dataColors, patternSize, fractalType, fractalParams])
 
@@ -501,7 +510,15 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
           Data-Driven Fractal Pattern
         </h2>
         <div className="bg-gradient-to-br from-pink-50 to-blue-50 rounded-2xl p-8 min-h-96 flex items-center justify-center">
-          {pattern ? (
+          {isGenerating ? (
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
+              <p className="text-gray-600">Generating {patternTypes.find(t => t.id === fractalType)?.name}...</p>
+              {fractalType === 'koch' && (
+                <p className="text-sm text-gray-500 mt-2">Complex fractals take a moment to render</p>
+              )}
+            </div>
+          ) : pattern ? (
             <div className="text-center">
               <div 
                 className="mb-6 inline-block border border-gray-200 overflow-auto max-w-full shadow-lg"
