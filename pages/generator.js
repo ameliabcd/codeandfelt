@@ -1,9 +1,8 @@
 'use client'
 import { useState } from 'react'
 import Head from 'next/head'
-import { Upload, Download, Code, Palette, Image } from 'lucide-react'
+import { Upload, Download, Code, Palette } from 'lucide-react'
 import FractalPatternGenerator from '../components/Generator/FractalPatternGenerator'
-import ContinuousPatternGenerator from '../components/Generator/ContinuousPatternGenerator'
 import DataPatternGenerator from '../components/Generator/DataPatternGenerator'
 import { colorPalettes } from '../lib/data'
 
@@ -11,7 +10,7 @@ export default function Generator() {
   const [uploadedFile, setUploadedFile] = useState(null)
   const [selectedColors, setSelectedColors] = useState(['#FCE4EC', '#E3F2FD', '#FFE0B2'])
   const [currentPattern, setCurrentPattern] = useState(null)
-  const [patternMode, setPatternMode] = useState('data') // 'data', 'fractal', or 'continuous'
+  const [patternMode, setPatternMode] = useState('data') // 'data' or 'fractal'
 
   const colorOptions = [
     // Light pastels (original)
@@ -82,17 +81,6 @@ export default function Generator() {
                     <Palette className="w-4 h-4 inline mr-2" />
                     Fractal Grid
                   </button>
-                  <button
-                    onClick={() => setPatternMode('continuous')}
-                    className={`px-4 py-3 rounded-xl font-medium transition-all ${
-                      patternMode === 'continuous'
-                        ? 'bg-blue-500 text-white shadow-md'
-                        : 'text-gray-600 hover:text-gray-800'
-                    }`}
-                  >
-                    <Image className="w-4 h-4 inline mr-2" />
-                    Smooth Patterns
-                  </button>
                 </div>
               </div>
             </div>
@@ -137,13 +125,7 @@ export default function Generator() {
                     </div>
                   )}
                 </>
-              ) : (
-                /* Continuous Pattern Generator */
-                <ContinuousPatternGenerator 
-                  selectedColors={selectedColors}
-                  onPatternGenerated={setCurrentPattern}
-                />
-              )}
+              ) : null}
             </div>
 
             {/* Color Palette - Hidden for Data Pattern mode */}
