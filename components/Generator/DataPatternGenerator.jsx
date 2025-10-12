@@ -136,7 +136,8 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
           case 'gradient':
             rawPattern = generateGradient(patternSize, {
               angle: patternParams.gradientAngle,
-              intensity: patternParams.gradientIntensity
+              intensity: patternParams.gradientIntensity,
+              offset: patternParams.gradientOffset
             })
             break
           case 'spiral':
