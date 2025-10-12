@@ -42,8 +42,7 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
     { id: 'noise', name: 'Felt Texture', icon: '🧶', description: 'Random noise', category: 'geometric' },
     { id: 'circular', name: 'Circular', icon: '⭕', description: 'Radial gradient', category: 'geometric' },
     { id: 'zigzag', name: 'Zigzag', icon: '⚡', description: 'Wave pattern', category: 'geometric' },
-    { id: 'diamond', name: 'Diamond', icon: '💎', description: 'Diamond grid', category: 'geometric' },
-    { id: 'random', name: 'Random Grid', icon: '🎲', description: 'Random cells', category: 'geometric' }
+    { id: 'diamond', name: 'Diamond', icon: '💎', description: 'Diamond grid', category: 'geometric' }
   ]
 
   // Handle file upload
@@ -187,12 +186,6 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
               scale: patternParams.diamondScale,
               centerX: patternParams.diamondCenterX,
               centerY: patternParams.diamondCenterY
-            })
-            break
-          case 'random':
-            rawPattern = generateRandomGrid(patternSize, {
-              seed: patternParams.randomSeed,
-              density: patternParams.randomDensity
             })
             break
           
@@ -439,7 +432,7 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
           
           {/* Geometric Patterns Section */}
           <div>
-            <h4 className="text-sm font-semibold text-gray-700 mb-3">📐 Geometric Patterns</h4>
+            <h4 className="text-sm font-semibold text-gray-700 mb-3">📐 Geometric Patterns (8 types)</h4>
             <div className="grid grid-cols-4 gap-3">
               {patternTypes.filter(t => t.category === 'geometric').map((type) => (
                 <button
@@ -504,8 +497,10 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
                 className="mb-6 inline-block border border-gray-200 overflow-auto max-w-full shadow-lg"
                 style={{ 
                   display: 'grid', 
-                  gridTemplateColumns: `repeat(${pattern[0]?.length || 1}, 1fr)`,
-                  gap: 0
+                  gridTemplateColumns: `repeat(${pattern[0]?.length || 1}, 12px)`,
+                  gridTemplateRows: `repeat(${pattern.length}, 12px)`,
+                  gap: 0,
+                  lineHeight: 0
                 }}
               >
                 {pattern.flat().map((color, i) => (
@@ -516,7 +511,8 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
                       width: '12px', 
                       height: '12px',
                       margin: 0,
-                      padding: 0
+                      padding: 0,
+                      display: 'block'
                     }}
                   />
                 ))}
