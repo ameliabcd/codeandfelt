@@ -4,6 +4,19 @@ import { Download, BarChart3, Settings, Grid, Sparkles } from 'lucide-react'
 import FileUpload from './FileUpload'
 import { parseCSV, parseJSON, parseText, dataToPattern, generateDataStats, dataToFractalParams, generateDataColors } from '../../lib/dataParser'
 import { generateMandelbrot, generateJulia, generateSierpinski, fractalToColors } from '../../lib/fractals'
+import { 
+  generateGradient, 
+  generateRandomGrid, 
+  generateSpiral, 
+  generateStripes, 
+  generateCheckerboard, 
+  generateNoise, 
+  generateCircularGradient, 
+  generateZigzag, 
+  generateDiamond,
+  patternToColors,
+  dataToPatternParams
+} from '../../lib/geometricPatterns'
 
 export default function DataPatternGenerator({ selectedColors, onPatternGenerated }) {
   const [fileData, setFileData] = useState(null)
@@ -16,10 +29,21 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
   const [fractalParams, setFractalParams] = useState(null)
   const [dataColors, setDataColors] = useState(null)
 
-  const fractalTypes = [
-    { id: 'mandelbrot', name: 'Mandelbrot Set', icon: '🌀', description: 'Classic fractal boundaries' },
-    { id: 'julia', name: 'Julia Set', icon: '✨', description: 'Complex iterations' },
-    { id: 'sierpinski', name: 'Sierpinski Triangle', icon: '🔺', description: 'Geometric recursion' }
+  const patternTypes = [
+    // Fractals
+    { id: 'mandelbrot', name: 'Mandelbrot', icon: '🌀', description: 'Fractal boundaries', category: 'fractal' },
+    { id: 'julia', name: 'Julia Set', icon: '✨', description: 'Complex iterations', category: 'fractal' },
+    { id: 'sierpinski', name: 'Sierpinski', icon: '🔺', description: 'Geometric recursion', category: 'fractal' },
+    // Geometric Patterns
+    { id: 'gradient', name: 'Gradient', icon: '🌈', description: 'Linear gradient', category: 'geometric' },
+    { id: 'spiral', name: 'Spiral Wave', icon: '🌊', description: 'Radial waves', category: 'geometric' },
+    { id: 'stripes', name: 'Stripes', icon: '📏', description: 'Linear stripes', category: 'geometric' },
+    { id: 'checkerboard', name: 'Checkerboard', icon: '🔲', description: 'Grid pattern', category: 'geometric' },
+    { id: 'noise', name: 'Felt Texture', icon: '🧶', description: 'Random noise', category: 'geometric' },
+    { id: 'circular', name: 'Circular', icon: '⭕', description: 'Radial gradient', category: 'geometric' },
+    { id: 'zigzag', name: 'Zigzag', icon: '⚡', description: 'Wave pattern', category: 'geometric' },
+    { id: 'diamond', name: 'Diamond', icon: '💎', description: 'Diamond grid', category: 'geometric' },
+    { id: 'random', name: 'Random Grid', icon: '🎲', description: 'Random cells', category: 'geometric' }
   ]
 
   // Handle file upload
@@ -72,17 +96,19 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
     }
   }
 
-  // Generate fractal pattern from data
+  // Generate pattern from data
   useEffect(() => {
     if (parsedData && fractalParams && dataColors) {
       try {
-        let fractalPattern
+        let rawPattern
+        const patternParams = dataToPatternParams(fractalParams)
         
+        // Generate based on pattern type
         switch (fractalType) {
+          // Fractals
           case 'mandelbrot':
-            fractalPattern = generateMandelbrot(
-              patternSize,
-              patternSize,
+            rawPattern = generateMandelbrot(
+              patternSize, patternSize,
               fractalParams.maxIterations,
               fractalParams.zoom,
               fractalParams.offsetX,
@@ -90,9 +116,8 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
             )
             break
           case 'julia':
-            fractalPattern = generateJulia(
-              patternSize,
-              patternSize,
+            rawPattern = generateJulia(
+              patternSize, patternSize,
               fractalParams.maxIterations,
               fractalParams.juliaReal,
               fractalParams.juliaImag,
@@ -102,18 +127,84 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
             )
             break
           case 'sierpinski':
-            fractalPattern = generateSierpinski(
-              patternSize,
-              patternSize,
+            rawPattern = generateSierpinski(
+              patternSize, patternSize,
               Math.floor(fractalParams.maxIterations / 10)
             )
             break
+          
+          // Geometric Patterns
+          case 'gradient':
+            rawPattern = generateGradient(patternSize, {
+              angle: patternParams.gradientAngle,
+              intensity: patternParams.gradientIntensity
+            })
+            break
+          case 'spiral':
+            rawPattern = generateSpiral(patternSize, {
+              frequency: patternParams.spiralFrequency,
+              amplitude: patternParams.spiralAmplitude,
+              rotation: patternParams.spiralRotation
+            })
+            break
+          case 'stripes':
+            rawPattern = generateStripes(patternSize, {
+              stripeWidth: patternParams.stripeWidth,
+              angle: patternParams.stripeAngle,
+              contrast: patternParams.stripeContrast
+            })
+            break
+          case 'checkerboard':
+            rawPattern = generateCheckerboard(patternSize, {
+              blockSize: patternParams.checkBlockSize,
+              contrast: patternParams.checkContrast
+            })
+            break
+          case 'noise':
+            rawPattern = generateNoise(patternSize, {
+              scale: patternParams.noiseScale,
+              octaves: patternParams.noiseOctaves,
+              persistence: patternParams.noisePersistence,
+              seed: patternParams.noiseSeed
+            })
+            break
+          case 'circular':
+            rawPattern = generateCircularGradient(patternSize, {
+              frequency: patternParams.circularFrequency,
+              centerX: patternParams.circularCenterX,
+              centerY: patternParams.circularCenterY
+            })
+            break
+          case 'zigzag':
+            rawPattern = generateZigzag(patternSize, {
+              xFrequency: patternParams.zigzagXFreq,
+              yFrequency: patternParams.zigzagYFreq,
+              amplitude: patternParams.zigzagAmplitude
+            })
+            break
+          case 'diamond':
+            rawPattern = generateDiamond(patternSize, {
+              scale: patternParams.diamondScale,
+              centerX: patternParams.diamondCenterX,
+              centerY: patternParams.diamondCenterY
+            })
+            break
+          case 'random':
+            rawPattern = generateRandomGrid(patternSize, {
+              seed: patternParams.randomSeed,
+              density: patternParams.randomDensity
+            })
+            break
+          
           default:
-            fractalPattern = generateMandelbrot(patternSize, patternSize, 100, 1, 0, 0)
+            rawPattern = generateMandelbrot(patternSize, patternSize, 100, 1, 0, 0)
         }
         
-        // Convert fractal to colors using data-generated colors
-        const colorPattern = fractalToColors(fractalPattern, dataColors, false)
+        // Convert pattern to colors using data-generated colors
+        const colorPattern = ['mandelbrot', 'julia', 'sierpinski'].includes(fractalType)
+          ? fractalToColors(rawPattern, dataColors, false)
+          : patternToColors(rawPattern, dataColors)
+        
         setPattern(colorPattern)
         
         // Pass pattern to parent
@@ -121,7 +212,7 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
           onPatternGenerated(colorPattern)
         }
       } catch (error) {
-        console.error('Error generating fractal pattern:', error)
+        console.error('Error generating pattern:', error)
       }
     }
   }, [parsedData, dataColors, patternSize, fractalType, fractalParams])
@@ -316,32 +407,60 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
         )}
       </div>
 
-      {/* Fractal Type Selection */}
+      {/* Pattern Type Selection */}
       {(parsedData || pattern) && (
         <div className="bg-white rounded-3xl shadow-lg p-8">
-          <h3 className="font-serif text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+          <h3 className="font-serif text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
             <Sparkles className="w-6 h-6" />
-            Fractal Type
+            Pattern Type
           </h3>
-          <div className="grid grid-cols-3 gap-3">
-            {fractalTypes.map((type) => (
-              <button
-                key={type.id}
-                onClick={() => setFractalType(type.id)}
-                className={`p-4 rounded-xl border-2 transition-all ${
-                  fractalType === type.id
-                    ? 'border-purple-500 bg-purple-50 text-purple-700'
-                    : 'border-gray-200 hover:border-gray-300 text-gray-600'
-                }`}
-              >
-                <div className="text-2xl mb-2">{type.icon}</div>
-                <div className="font-medium text-sm">{type.name}</div>
-                <div className="text-xs opacity-75 mt-1">{type.description}</div>
-              </button>
-            ))}
+          
+          {/* Fractals Section */}
+          <div className="mb-6">
+            <h4 className="text-sm font-semibold text-gray-700 mb-3">🌀 Fractal Patterns</h4>
+            <div className="grid grid-cols-3 gap-3">
+              {patternTypes.filter(t => t.category === 'fractal').map((type) => (
+                <button
+                  key={type.id}
+                  onClick={() => setFractalType(type.id)}
+                  className={`p-3 rounded-xl border-2 transition-all ${
+                    fractalType === type.id
+                      ? 'border-purple-500 bg-purple-50 text-purple-700'
+                      : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                  }`}
+                >
+                  <div className="text-2xl mb-1">{type.icon}</div>
+                  <div className="font-medium text-xs">{type.name}</div>
+                  <div className="text-xs opacity-75 mt-0.5">{type.description}</div>
+                </button>
+              ))}
+            </div>
           </div>
+          
+          {/* Geometric Patterns Section */}
+          <div>
+            <h4 className="text-sm font-semibold text-gray-700 mb-3">📐 Geometric Patterns</h4>
+            <div className="grid grid-cols-4 gap-3">
+              {patternTypes.filter(t => t.category === 'geometric').map((type) => (
+                <button
+                  key={type.id}
+                  onClick={() => setFractalType(type.id)}
+                  className={`p-3 rounded-xl border-2 transition-all ${
+                    fractalType === type.id
+                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                  }`}
+                >
+                  <div className="text-2xl mb-1">{type.icon}</div>
+                  <div className="font-medium text-xs">{type.name}</div>
+                  <div className="text-xs opacity-75 mt-0.5">{type.description}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+          
           <p className="text-sm text-gray-500 mt-4">
-            Your data controls the fractal parameters (zoom, position, iterations). Different data = different patterns!
+            ✨ All patterns are controlled by your data values. Different data = unique patterns!
           </p>
         </div>
       )}
@@ -403,7 +522,7 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
                 ))}
               </div>
               <p className="text-gray-700 font-medium">
-                {fractalTypes.find(t => t.id === fractalType)?.name} ({pattern.length}×{pattern[0]?.length || 0})
+                {patternTypes.find(t => t.id === fractalType)?.name} ({pattern.length}×{pattern[0]?.length || 0})
               </p>
               {fileData && (
                 <p className="text-sm text-gray-500 mt-2">
