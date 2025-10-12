@@ -267,12 +267,11 @@ export default function FractalPatternGenerator({ selectedColors, onPatternGener
             </div>
           ) : fractalPattern ? (
             <div className="text-center">
-              <div className="grid gap-0 mb-6 inline-block border border-gray-200" style={{ gridTemplateColumns: `repeat(${patternSize}, 1fr)` }}>
+              <div className="mb-6 inline-block border border-gray-200" style={{ display: 'grid', gridTemplateColumns: `repeat(${patternSize}, 1fr)`, gap: 0 }}>
                 {fractalPattern.flat().map((color, i) => (
                   <div
                     key={i}
-                    className="w-3 h-3"
-                    style={{ backgroundColor: color }}
+                    style={{ backgroundColor: color, width: '12px', height: '12px', margin: 0, padding: 0 }}
                   />
                 ))}
               </div>
