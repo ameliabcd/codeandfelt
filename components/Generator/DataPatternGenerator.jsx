@@ -151,13 +151,15 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
             rawPattern = generateStripes(patternSize, {
               stripeWidth: patternParams.stripeWidth,
               angle: patternParams.stripeAngle,
-              contrast: patternParams.stripeContrast
+              contrast: patternParams.stripeContrast,
+              wave: patternParams.stripeWave
             })
             break
           case 'checkerboard':
             rawPattern = generateCheckerboard(patternSize, {
               blockSize: patternParams.checkBlockSize,
-              contrast: patternParams.checkContrast
+              contrast: patternParams.checkContrast,
+              depth: patternParams.checkDepth
             })
             break
           case 'noise':
