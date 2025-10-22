@@ -3,7 +3,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { Download, BarChart3, Settings, Grid, Sparkles } from 'lucide-react'
 import FileUpload from './FileUpload'
 import { parseCSV, parseJSON, parseText, dataToPattern, generateDataStats, dataToFractalParams, generateDataColors } from '../../lib/dataParser'
-import { generateMandelbrot, generateJulia, generateSierpinski, generateKochSnowflake, fractalToColors } from '../../lib/fractals'
+import { generateMandelbrot, generateJulia, generateSierpinski, generateKochSnowflake, generateMandelbrotWoolLayers, generatePhiMatrix, fractalToColors } from '../../lib/fractals'
 import { 
   generateGradient, 
   generateRandomGrid, 
@@ -17,6 +17,19 @@ import {
   patternToColors,
   dataToPatternParams
 } from '../../lib/geometricPatterns'
+import { exportKochSnowflakeSVG, exportMandelbrotWoolSVG, exportPhiMatrixSVG, downloadSVG } from '../../lib/svgExporter'
+import { wallpaperGroups, generateWallpaperPattern } from '../../lib/wallpaperGroups'
+
+// Icon mapping for wallpaper groups
+function getWallpaperIcon(groupId) {
+  const iconMap = {
+    'p1': '⬜', 'p2': '🔄', 'pm': '🪞', 'pg': '🌊', 'cm': '🎯',
+    'pmm': '🔄🪞', 'pmg': '🪞🌊', 'pgg': '🌊🔄', 'cmm': '🎯🔄',
+    'p4': '🔲', 'p4m': '🔲🪞', 'p4g': '🔲🌊', 'p3': '🔺', 
+    'p3m1': '🔺🪞', 'p31m': '🔺🎯', 'p6': '⬡', 'p6m': '⬡🪞'
+  }
+  return iconMap[groupId] || '📐'
+}
 
 export default function DataPatternGenerator({ selectedColors, onPatternGenerated }) {
   const [fileData, setFileData] = useState(null)
@@ -29,6 +42,7 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
   const [fractalParams, setFractalParams] = useState(null)
   const [dataColors, setDataColors] = useState(null)
   const [isGenerating, setIsGenerating] = useState(false)
+  const [exportData, setExportData] = useState(null)
 
   const patternTypes = [
     // Fractals
@@ -36,6 +50,8 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
     { id: 'julia', name: 'Julia Set', icon: '✨', description: 'Complex iterations', category: 'fractal' },
     { id: 'sierpinski', name: 'Sierpinski', icon: '🔺', description: 'Geometric recursion', category: 'fractal' },
     { id: 'koch', name: 'Koch Snowflake', icon: '❄️', description: 'Recursive snowflake', category: 'fractal' },
+    { id: 'mandelbrot-wool', name: 'Mandelbrot Wool', icon: '🧶', description: 'Wool layering guide', category: 'fractal' },
+    { id: 'phi-matrix', name: 'Phi Matrix', icon: '📐', description: 'Golden ratio sculptor', category: 'fractal' },
     // Geometric Patterns
     { id: 'gradient', name: 'Gradient', icon: '🌈', description: 'Linear gradient', category: 'geometric' },
     { id: 'spiral', name: 'Spiral Wave', icon: '🌊', description: 'Radial waves', category: 'geometric' },
@@ -44,7 +60,15 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
     { id: 'noise', name: 'Felt Texture', icon: '🧶', description: 'Random noise', category: 'geometric' },
     { id: 'circular', name: 'Circular', icon: '⭕', description: 'Radial gradient', category: 'geometric' },
     { id: 'zigzag', name: 'Zigzag', icon: '⚡', description: 'Wave pattern', category: 'geometric' },
-    { id: 'diamond', name: 'Diamond', icon: '💎', description: 'Diamond grid', category: 'geometric' }
+    { id: 'diamond', name: 'Diamond', icon: '💎', description: 'Diamond grid', category: 'geometric' },
+    // Wallpaper Groups (17 types)
+    ...wallpaperGroups.map(group => ({
+      id: group.id,
+      name: group.name,
+      icon: getWallpaperIcon(group.id),
+      description: group.description,
+      category: 'wallpaper'
+    }))
   ]
 
   // Handle file upload
@@ -143,6 +167,24 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
               Math.min(4, Math.floor(3 + (fractalParams.maxIterations / 100))) // 3-4 iterations max
             )
             break
+          case 'mandelbrot-wool':
+            const woolResult = generateMandelbrotWoolLayers(
+              patternSize, patternSize,
+              fractalParams.maxIterations,
+              fractalParams.zoom,
+              fractalParams.offsetX,
+              fractalParams.offsetY
+            )
+            rawPattern = woolResult.pattern
+            break
+          case 'phi-matrix':
+            const phiResult = generatePhiMatrix(
+              patternSize, patternSize,
+              20, // grid size
+              fractalParams.phiRatio || 1.618
+            )
+            rawPattern = phiResult.pattern
+            break
           
           // Geometric Patterns
           case 'gradient':
@@ -204,12 +246,24 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
             })
             break
           
+          // Wallpaper Groups
           default:
-            rawPattern = generateMandelbrot(patternSize, patternSize, 100, 1, 0, 0)
+            if (wallpaperGroups.find(g => g.id === fractalType)) {
+              rawPattern = generateWallpaperPattern(patternSize, patternSize, fractalType, {
+                cellSize: patternParams.cellSize || 20,
+                offsetX: patternParams.offsetX || 0,
+                offsetY: patternParams.offsetY || 0,
+                centerX: patternSize / 2,
+                centerY: patternSize / 2,
+                glideOffset: patternParams.glideOffset || 10
+              })
+            } else {
+              rawPattern = generateMandelbrot(patternSize, patternSize, 100, 1, 0, 0)
+            }
         }
         
         // Convert pattern to colors using data-generated colors
-        const colorPattern = ['mandelbrot', 'julia', 'sierpinski', 'koch'].includes(fractalType)
+        const colorPattern = ['mandelbrot', 'julia', 'sierpinski', 'koch', 'mandelbrot-wool', 'phi-matrix'].includes(fractalType)
           ? fractalToColors(rawPattern, dataColors, false)
           : patternToColors(rawPattern, dataColors)
         
@@ -228,6 +282,34 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
       }, 100) // Small delay to let UI update
     }
   }, [parsedData, dataColors, patternSize, fractalType, fractalParams])
+
+  // Export pattern as SVG felting guide
+  const exportPattern = () => {
+    if (!pattern || !dataColors) return
+    
+    let svgContent = ''
+    const filename = `felted-${fractalType}-${Date.now()}.svg`
+    
+    switch (fractalType) {
+      case 'koch':
+        const kochData = generateKochSnowflake(patternSize, patternSize, 3, 3, true)
+        svgContent = exportKochSnowflakeSVG(kochData.segments, kochData.centerX, kochData.centerY, kochData.size, kochData.symmetry, dataColors)
+        break
+      case 'mandelbrot-wool':
+        const woolData = generateMandelbrotWoolLayers(patternSize, patternSize, fractalParams.maxIterations, fractalParams.zoom, fractalParams.offsetX, fractalParams.offsetY)
+        svgContent = exportMandelbrotWoolSVG(woolData.woolLayers, patternSize, patternSize, dataColors)
+        break
+      case 'phi-matrix':
+        const phiData = generatePhiMatrix(patternSize, patternSize, 20, fractalParams.phiRatio || 1.618)
+        svgContent = exportPhiMatrixSVG(phiData.phiGrid, patternSize, patternSize, dataColors)
+        break
+      default:
+        // Generic SVG export for other patterns
+        svgContent = exportGenericPatternSVG(pattern, dataColors, fractalType)
+    }
+    
+    downloadSVG(svgContent, filename)
+  }
 
   // Generate random sample data
   const generateSampleData = () => {
@@ -429,8 +511,8 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
           
           {/* Fractals Section */}
           <div className="mb-6">
-            <h4 className="text-sm font-semibold text-gray-700 mb-3">🌀 Fractal Patterns (4 types)</h4>
-            <div className="grid grid-cols-4 gap-3">
+            <h4 className="text-sm font-semibold text-gray-700 mb-3">🌀 Fractal Patterns (6 types)</h4>
+            <div className="grid grid-cols-3 gap-3">
               {patternTypes.filter(t => t.category === 'fractal').map((type) => (
                 <button
                   key={type.id}
@@ -450,7 +532,7 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
           </div>
           
           {/* Geometric Patterns Section */}
-          <div>
+          <div className="mb-6">
             <h4 className="text-sm font-semibold text-gray-700 mb-3">📐 Geometric Patterns (8 types)</h4>
             <div className="grid grid-cols-4 gap-3">
               {patternTypes.filter(t => t.category === 'geometric').map((type) => (
@@ -471,8 +553,31 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
             </div>
           </div>
           
+          {/* Wallpaper Groups Section */}
+          <div>
+            <h4 className="text-sm font-semibold text-gray-700 mb-3">🌐 Wallpaper Groups (17 types)</h4>
+            <div className="grid grid-cols-4 gap-2">
+              {patternTypes.filter(t => t.category === 'wallpaper').map((type) => (
+                <button
+                  key={type.id}
+                  onClick={() => setFractalType(type.id)}
+                  className={`p-2 rounded-lg border-2 transition-all ${
+                    fractalType === type.id
+                      ? 'border-purple-500 bg-purple-50 text-purple-700'
+                      : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                  }`}
+                >
+                  <div className="text-lg mb-1">{type.icon}</div>
+                  <div className="font-medium text-xs">{type.name}</div>
+                  <div className="text-xs opacity-75 mt-0.5">{type.description}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+          
           <p className="text-sm text-gray-500 mt-4">
-            ✨ All patterns are controlled by your data values. Different data = unique patterns!
+            ✨ All patterns are controlled by your data values. Different data = unique patterns!<br/>
+            📊 Total: 6 Fractals + 8 Geometric + 17 Wallpaper Groups = 31 pattern types
           </p>
         </div>
       )}
@@ -506,9 +611,20 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
 
       {/* Pattern Preview */}
       <div className="bg-white rounded-3xl shadow-lg p-8">
-        <h2 className="font-serif text-2xl font-bold text-gray-800 mb-6">
-          Data-Driven Fractal Pattern
-        </h2>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="font-serif text-2xl font-bold text-gray-800">
+            Data-Driven Fractal Pattern
+          </h2>
+          {pattern && (
+            <button
+              onClick={exportPattern}
+              className="flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors"
+            >
+              <Download size={16} />
+              Export Felting Guide
+            </button>
+          )}
+        </div>
         <div className="bg-gradient-to-br from-pink-50 to-blue-50 rounded-2xl p-8 min-h-96 flex items-center justify-center">
           {isGenerating ? (
             <div className="text-center">
