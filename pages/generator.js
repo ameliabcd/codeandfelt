@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import Head from 'next/head'
-import { Upload, Download, Code, Palette } from 'lucide-react'
+import { Upload, Download, Database, Palette } from 'lucide-react'
 import FractalPatternGenerator from '../components/Generator/FractalPatternGenerator'
 import DataPatternGenerator from '../components/Generator/DataPatternGenerator'
 import { colorPalettes } from '../lib/data'
@@ -67,7 +67,7 @@ export default function Generator() {
                         : 'text-gray-600 hover:text-gray-800'
                     }`}
                   >
-                    <Code className="w-4 h-4 inline mr-2" />
+                    <Database className="w-4 h-4 inline mr-2" />
                     Data Patterns
                   </button>
                   <button

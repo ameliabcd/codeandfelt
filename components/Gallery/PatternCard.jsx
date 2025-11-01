@@ -1,8 +1,8 @@
 import { Heart } from 'lucide-react'
 
-const PatternCard = ({ pattern }) => {
+const PatternCard = ({ pattern, onClick }) => {
   return (
-    <div className="pattern-card">
+    <div className="pattern-card cursor-pointer" onClick={onClick}>
       <div className="h-48 bg-gradient-to-br from-pink-100 to-blue-100 flex items-center justify-center text-6xl">
         {pattern.image}
       </div>

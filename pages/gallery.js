@@ -2,14 +2,28 @@ import { useState } from 'react'
 import Head from 'next/head'
 import FilterBar from '../components/Gallery/FilterBar'
 import PatternGrid from '../components/Gallery/PatternGrid'
+import PatternDetail from '../components/Gallery/PatternDetail'
 import { samplePatterns } from '../lib/data'
 
 export default function Gallery() {
   const [selectedFilter, setSelectedFilter] = useState('all')
+  const [selectedPattern, setSelectedPattern] = useState(null)
 
   const filteredPatterns = selectedFilter === 'all' 
     ? samplePatterns 
     : samplePatterns.filter(pattern => pattern.category === selectedFilter)
+
+  if (selectedPattern) {
+    return (
+      <>
+        <Head>
+          <title>{selectedPattern.title} - Math & Felt</title>
+          <meta name="description" content={selectedPattern.description} />
+        </Head>
+        <PatternDetail pattern={selectedPattern} onBack={() => setSelectedPattern(null)} />
+      </>
+    )
+  }
 
   return (
     <>
@@ -30,7 +44,7 @@ export default function Gallery() {
             onFilterChange={setSelectedFilter}
           />
           
-          <PatternGrid patterns={filteredPatterns} />
+          <PatternGrid patterns={filteredPatterns} onPatternClick={setSelectedPattern} />
           
           <div className="text-center mt-12">
             <button className="btn-secondary">

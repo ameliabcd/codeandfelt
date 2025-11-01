@@ -13,7 +13,7 @@ const HeroSection = () => {
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8 leading-relaxed">
             Transform your spreadsheets, APIs, and data files into beautiful, feltable patterns. 
-            Where code meets craft, and data becomes art.
+            Where math meets craft, and data becomes art.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/generator" className="btn-primary">
