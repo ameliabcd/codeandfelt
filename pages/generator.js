@@ -45,7 +45,7 @@ export default function Generator() {
   return (
     <>
       <Head>
-        <title>Pattern Generator - Code & Felt</title>
+        <title>Pattern Generator - Math & Felt</title>
         <meta name="description" content="Transform your data into beautiful felting patterns" />
       </Head>
       

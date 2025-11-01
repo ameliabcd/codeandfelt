@@ -7,7 +7,7 @@ const Footer = () => {
               <div className="w-8 h-8 bg-gradient-to-br from-pink-200 to-blue-200 rounded-full flex items-center justify-center">
                 🧶
               </div>
-              <span className="font-serif text-lg font-bold text-gray-800">Code & Felt</span>
+              <span className="font-serif text-lg font-bold text-gray-800">Math & Felt</span>
             </div>
             
             <div className="flex space-x-4 mb-4 md:mb-0">
@@ -22,7 +22,7 @@ const Footer = () => {
               </div>
             </div>
             
-            <p className="text-sm text-gray-600">© 2024 Code & Felt. All rights reserved.</p>
+            <p className="text-sm text-gray-600">© 2024 Math & Felt. All rights reserved.</p>
           </div>
         </div>
       </footer>
