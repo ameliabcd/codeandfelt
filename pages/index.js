@@ -1,7 +1,6 @@
 import Head from 'next/head'
 import HeroSection from '../components/Home/HeroSection'
 import PatternGrid from '../components/Home/PatternGrid'
-import TestimonialCarousel from '../components/Home/TestimonialCarousel'
 import NewsletterSignup from '../components/Home/NewsletterSignup'
 
 export default function Home() {
@@ -17,7 +16,6 @@ export default function Home() {
       <div className="gradient-bg">
         <HeroSection />
         <PatternGrid />
-        <TestimonialCarousel />
         <NewsletterSignup />
       </div>
     </>
