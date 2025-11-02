@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/router'
 import Head from 'next/head'
 import FilterBar from '../components/Gallery/FilterBar'
 import PatternGrid from '../components/Gallery/PatternGrid'
@@ -6,8 +7,20 @@ import PatternDetail from '../components/Gallery/PatternDetail'
 import { samplePatterns } from '../lib/data'
 
 export default function Gallery() {
+  const router = useRouter()
   const [selectedFilter, setSelectedFilter] = useState('all')
   const [selectedPattern, setSelectedPattern] = useState(null)
+
+  // Handle URL parameter for direct pattern navigation
+  useEffect(() => {
+    if (router.query.pattern) {
+      const patternId = parseInt(router.query.pattern)
+      const pattern = samplePatterns.find(p => p.id === patternId)
+      if (pattern) {
+        setSelectedPattern(pattern)
+      }
+    }
+  }, [router.query.pattern])
 
   const filteredPatterns = selectedFilter === 'all' 
     ? samplePatterns 

@@ -1,7 +1,14 @@
+import { useRouter } from 'next/router'
 import { samplePatterns } from '../../lib/data'
 import { Heart } from 'lucide-react'
 
 const PatternGrid = () => {
+  const router = useRouter()
+  
+  const handlePatternClick = (pattern) => {
+    router.push(`/gallery?pattern=${pattern.id}`)
+  }
+  
   return (
     <section className="py-20 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
@@ -12,7 +19,8 @@ const PatternGrid = () => {
           {samplePatterns.slice(0, 6).map((pattern) => (
             <div
               key={pattern.id}
-              className="pattern-card"
+              className="pattern-card cursor-pointer"
+              onClick={() => handlePatternClick(pattern)}
             >
               <div className="h-48 bg-gradient-to-br from-pink-100 to-blue-100 flex items-center justify-center text-6xl">
                 {pattern.image}
