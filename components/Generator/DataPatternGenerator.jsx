@@ -561,84 +561,184 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
         )}
       </div>
 
-      {/* Pattern Type Selection */}
+      {/* Pattern Preview and Type Selection */}
       {(parsedData || pattern) && (
-        <div className="bg-white rounded-3xl shadow-lg p-8">
-          <h3 className="font-serif text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-            <Sparkles className="w-6 h-6" />
-            Pattern Type
-          </h3>
-          
-          {/* Fractals Section */}
-          <div className="mb-6">
-            <h4 className="text-sm font-semibold text-gray-700 mb-3">🌀 Fractal Patterns (6 types)</h4>
-            <div className="grid grid-cols-3 gap-3">
-              {patternTypes.filter(t => t.category === 'fractal').map((type) => (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Pattern Preview */}
+          <div className="bg-white rounded-3xl shadow-lg p-8 lg:order-1">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="font-serif text-2xl font-bold text-gray-800">
+                Data-Driven Fractal Pattern
+              </h2>
+              {pattern && (
                 <button
-                  key={type.id}
-                  onClick={() => setFractalType(type.id)}
-                  className={`p-3 rounded-xl border-2 transition-all ${
-                    fractalType === type.id
-                      ? 'border-purple-500 bg-purple-50 text-purple-700'
-                      : 'border-gray-200 hover:border-gray-300 text-gray-600'
-                  }`}
+                  onClick={exportPattern}
+                  className="flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors"
                 >
-                  <div className="text-2xl mb-1">{type.icon}</div>
-                  <div className="font-medium text-xs">{type.name}</div>
-                  <div className="text-xs opacity-75 mt-0.5">{type.description}</div>
+                  <Download size={16} />
+                  Export Felting Guide
                 </button>
-              ))}
+              )}
             </div>
-          </div>
-          
-          {/* Geometric Patterns Section */}
-          <div className="mb-6">
-            <h4 className="text-sm font-semibold text-gray-700 mb-3">📐 Geometric Patterns (8 types)</h4>
-            <div className="grid grid-cols-4 gap-3">
-              {patternTypes.filter(t => t.category === 'geometric').map((type) => (
-                <button
-                  key={type.id}
-                  onClick={() => setFractalType(type.id)}
-                  className={`p-3 rounded-xl border-2 transition-all ${
-                    fractalType === type.id
-                      ? 'border-blue-500 bg-blue-50 text-blue-700'
-                      : 'border-gray-200 hover:border-gray-300 text-gray-600'
-                  }`}
-                >
-                  <div className="text-2xl mb-1">{type.icon}</div>
-                  <div className="font-medium text-xs">{type.name}</div>
-                  <div className="text-xs opacity-75 mt-0.5">{type.description}</div>
-                </button>
-              ))}
+            <div className="bg-gradient-to-br from-pink-50 to-blue-50 rounded-2xl p-8 min-h-96 flex items-center justify-center">
+              {isGenerating ? (
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
+                  <p className="text-gray-600">Generating {patternTypes.find(t => t.id === fractalType)?.name}...</p>
+                  {fractalType === 'koch' && (
+                    <p className="text-sm text-gray-500 mt-2">Complex fractals take a moment to render</p>
+                  )}
+                </div>
+              ) : pattern ? (
+                <div className="text-center">
+                  <div 
+                    className="mb-6 inline-block border border-gray-200 overflow-auto max-w-full shadow-lg"
+                    style={{ 
+                      display: 'grid', 
+                      gridTemplateColumns: `repeat(${pattern[0]?.length || 1}, 12px)`,
+                      gridTemplateRows: `repeat(${pattern.length}, 12px)`,
+                      gap: 0,
+                      lineHeight: 0
+                    }}
+                  >
+                    {pattern.flat().map((color, i) => (
+                      <div
+                        key={i}
+                        style={{ 
+                          backgroundColor: color, 
+                          width: '12px', 
+                          height: '12px',
+                          margin: 0,
+                          padding: 0,
+                          display: 'block'
+                        }}
+                      />
+                    ))}
+                  </div>
+                  <p className="text-gray-700 font-medium">
+                    {patternTypes.find(t => t.id === fractalType)?.name} ({pattern.length}×{pattern[0]?.length || 0})
+                  </p>
+                  {fileData && (
+                    <p className="text-sm text-gray-500 mt-2">
+                      Generated from: {fileData.name}
+                    </p>
+                  )}
+                  <p className="text-xs text-purple-600 mt-2 font-medium">
+                    ✨ Pattern parameters derived from your data
+                  </p>
+                </div>
+              ) : (
+                <div className="text-center">
+                  <BarChart3 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-500">Upload data or generate sample to see your fractal pattern</p>
+                </div>
+              )}
             </div>
+            
+            {/* Download Buttons */}
+            {pattern && (
+              <div className="mt-6 space-y-4">
+                <div className="flex gap-4">
+                  <button 
+                    onClick={downloadPattern}
+                    className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-400 to-blue-500 text-white rounded-2xl font-medium hover:from-blue-500 hover:to-blue-600 transition-all duration-200 flex items-center justify-center gap-2"
+                  >
+                    <Download className="w-5 h-5" />
+                    Download PNG
+                  </button>
+                  <button 
+                    onClick={downloadPatternPDF}
+                    className="flex-1 px-6 py-3 bg-gradient-to-r from-pink-400 to-pink-500 text-white rounded-2xl font-medium hover:from-pink-500 hover:to-pink-600 transition-all duration-200 flex items-center justify-center gap-2"
+                  >
+                    <Download className="w-5 h-5" />
+                    Download PDF
+                  </button>
+                </div>
+                <p className="text-sm text-gray-500 text-center">
+                  Download your pattern to print and use for felting projects
+                </p>
+              </div>
+            )}
           </div>
-          
-          {/* Wallpaper Groups Section */}
-          <div>
-            <h4 className="text-sm font-semibold text-gray-700 mb-3">🌐 Wallpaper Groups (17 types)</h4>
-            <div className="grid grid-cols-4 gap-2">
-              {patternTypes.filter(t => t.category === 'wallpaper').map((type) => (
-                <button
-                  key={type.id}
-                  onClick={() => setFractalType(type.id)}
-                  className={`p-2 rounded-lg border-2 transition-all ${
-                    fractalType === type.id
-                      ? 'border-purple-500 bg-purple-50 text-purple-700'
-                      : 'border-gray-200 hover:border-gray-300 text-gray-600'
-                  }`}
-                >
-                  <div className="text-lg mb-1">{type.icon}</div>
-                  <div className="font-medium text-xs">{type.name}</div>
-                  <div className="text-xs opacity-75 mt-0.5">{type.description}</div>
-                </button>
-              ))}
+
+          {/* Pattern Type Selection */}
+          <div className="bg-white rounded-3xl shadow-lg p-8 lg:order-2">
+            <h3 className="font-serif text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+              <Sparkles className="w-6 h-6" />
+              Pattern Type
+            </h3>
+            
+            {/* Fractals Section */}
+            <div className="mb-6">
+              <h4 className="text-sm font-semibold text-gray-700 mb-3">🌀 Fractal Patterns (6 types)</h4>
+              <div className="grid grid-cols-2 gap-3">
+                {patternTypes.filter(t => t.category === 'fractal').map((type) => (
+                  <button
+                    key={type.id}
+                    onClick={() => setFractalType(type.id)}
+                    className={`p-3 rounded-xl border-2 transition-all ${
+                      fractalType === type.id
+                        ? 'border-purple-500 bg-purple-50 text-purple-700'
+                        : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                    }`}
+                  >
+                    <div className="text-2xl mb-1">{type.icon}</div>
+                    <div className="font-medium text-xs">{type.name}</div>
+                    <div className="text-xs opacity-75 mt-0.5">{type.description}</div>
+                  </button>
+                ))}
+              </div>
             </div>
+            
+            {/* Geometric Patterns Section */}
+            <div className="mb-6">
+              <h4 className="text-sm font-semibold text-gray-700 mb-3">📐 Geometric Patterns (8 types)</h4>
+              <div className="grid grid-cols-2 gap-3">
+                {patternTypes.filter(t => t.category === 'geometric').map((type) => (
+                  <button
+                    key={type.id}
+                    onClick={() => setFractalType(type.id)}
+                    className={`p-3 rounded-xl border-2 transition-all ${
+                      fractalType === type.id
+                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                        : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                    }`}
+                  >
+                    <div className="text-2xl mb-1">{type.icon}</div>
+                    <div className="font-medium text-xs">{type.name}</div>
+                    <div className="text-xs opacity-75 mt-0.5">{type.description}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            {/* Wallpaper Groups Section */}
+            <div>
+              <h4 className="text-sm font-semibold text-gray-700 mb-3">🌐 Wallpaper Groups (17 types)</h4>
+              <div className="grid grid-cols-2 gap-2">
+                {patternTypes.filter(t => t.category === 'wallpaper').map((type) => (
+                  <button
+                    key={type.id}
+                    onClick={() => setFractalType(type.id)}
+                    className={`p-2 rounded-lg border-2 transition-all ${
+                      fractalType === type.id
+                        ? 'border-purple-500 bg-purple-50 text-purple-700'
+                        : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                    }`}
+                  >
+                    <div className="text-lg mb-1">{type.icon}</div>
+                    <div className="font-medium text-xs">{type.name}</div>
+                    <div className="text-xs opacity-75 mt-0.5">{type.description}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            <p className="text-sm text-gray-500 mt-4">
+              ✨ All patterns are controlled by your data values. Different data = unique patterns!<br/>
+              📊 Total: 6 Fractals + 8 Geometric + 17 Wallpaper Groups = 31 pattern types
+            </p>
           </div>
-          
-          <p className="text-sm text-gray-500 mt-4">
-            ✨ All patterns are controlled by your data values. Different data = unique patterns!<br/>
-            📊 Total: 6 Fractals + 8 Geometric + 17 Wallpaper Groups = 31 pattern types
-          </p>
         </div>
       )}
 
@@ -669,102 +769,22 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
         </div>
       )}
 
-      {/* Pattern Preview */}
-      <div className="bg-white rounded-3xl shadow-lg p-8">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="font-serif text-2xl font-bold text-gray-800">
-            Data-Driven Fractal Pattern
-          </h2>
-          {pattern && (
-            <button
-              onClick={exportPattern}
-              className="flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors"
-            >
-              <Download size={16} />
-              Export Felting Guide
-            </button>
-          )}
-        </div>
-        <div className="bg-gradient-to-br from-pink-50 to-blue-50 rounded-2xl p-8 min-h-96 flex items-center justify-center">
-          {isGenerating ? (
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
-              <p className="text-gray-600">Generating {patternTypes.find(t => t.id === fractalType)?.name}...</p>
-              {fractalType === 'koch' && (
-                <p className="text-sm text-gray-500 mt-2">Complex fractals take a moment to render</p>
-              )}
-            </div>
-          ) : pattern ? (
-            <div className="text-center">
-              <div 
-                className="mb-6 inline-block border border-gray-200 overflow-auto max-w-full shadow-lg"
-                style={{ 
-                  display: 'grid', 
-                  gridTemplateColumns: `repeat(${pattern[0]?.length || 1}, 12px)`,
-                  gridTemplateRows: `repeat(${pattern.length}, 12px)`,
-                  gap: 0,
-                  lineHeight: 0
-                }}
-              >
-                {pattern.flat().map((color, i) => (
-                  <div
-                    key={i}
-                    style={{ 
-                      backgroundColor: color, 
-                      width: '12px', 
-                      height: '12px',
-                      margin: 0,
-                      padding: 0,
-                      display: 'block'
-                    }}
-                  />
-                ))}
-              </div>
-              <p className="text-gray-700 font-medium">
-                {patternTypes.find(t => t.id === fractalType)?.name} ({pattern.length}×{pattern[0]?.length || 0})
-              </p>
-              {fileData && (
-                <p className="text-sm text-gray-500 mt-2">
-                  Generated from: {fileData.name}
-                </p>
-              )}
-              <p className="text-xs text-purple-600 mt-2 font-medium">
-                ✨ Pattern parameters derived from your data
-              </p>
-            </div>
-          ) : (
+      {/* Fallback Pattern Preview when no data */}
+      {!parsedData && !pattern && (
+        <div className="bg-white rounded-3xl shadow-lg p-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="font-serif text-2xl font-bold text-gray-800">
+              Data-Driven Fractal Pattern
+            </h2>
+          </div>
+          <div className="bg-gradient-to-br from-pink-50 to-blue-50 rounded-2xl p-8 min-h-96 flex items-center justify-center">
             <div className="text-center">
               <BarChart3 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-500">Upload data or generate sample to see your fractal pattern</p>
             </div>
-          )}
-        </div>
-        
-        {/* Download Buttons */}
-        {pattern && (
-          <div className="mt-6 space-y-4">
-            <div className="flex gap-4">
-              <button 
-                onClick={downloadPattern}
-                className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-400 to-blue-500 text-white rounded-2xl font-medium hover:from-blue-500 hover:to-blue-600 transition-all duration-200 flex items-center justify-center gap-2"
-              >
-                <Download className="w-5 h-5" />
-                Download PNG
-              </button>
-              <button 
-                onClick={downloadPatternPDF}
-                className="flex-1 px-6 py-3 bg-gradient-to-r from-pink-400 to-pink-500 text-white rounded-2xl font-medium hover:from-pink-500 hover:to-pink-600 transition-all duration-200 flex items-center justify-center gap-2"
-              >
-                <Download className="w-5 h-5" />
-                Download PDF
-              </button>
-            </div>
-            <p className="text-sm text-gray-500 text-center">
-              Download your pattern to print and use for felting projects
-            </p>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   )
 }
