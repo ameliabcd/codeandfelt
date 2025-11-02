@@ -1,7 +1,8 @@
 'use client'
 import { useState, useEffect, useMemo } from 'react'
-import { Download, BarChart3, Settings, Grid, Sparkles } from 'lucide-react'
+import { Download, BarChart3, Settings, Grid, Sparkles, Upload, Keyboard } from 'lucide-react'
 import FileUpload from './FileUpload'
+import ManualDataEntry from './ManualDataEntry'
 import { parseCSV, parseJSON, parseText, dataToPattern, generateDataStats, dataToFractalParams, generateDataColors } from '../../lib/dataParser'
 import { generateMandelbrot, generateJulia, generateSierpinski, generateKochSnowflake, generateMandelbrotWoolLayers, generatePhiMatrix, fractalToColors } from '../../lib/fractals'
 import { 
@@ -32,6 +33,7 @@ function getWallpaperIcon(groupId) {
 }
 
 export default function DataPatternGenerator({ selectedColors, onPatternGenerated }) {
+  const [inputMode, setInputMode] = useState('upload') // 'upload' or 'manual'
   const [fileData, setFileData] = useState(null)
   const [parsedData, setParsedData] = useState(null)
   const [pattern, setPattern] = useState(null)
@@ -119,6 +121,31 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
     } catch (error) {
       console.error('Error parsing file:', error)
     }
+  }
+
+  // Handle manual data entry
+  const handleManualDataSubmit = (data) => {
+    if (!data || !data.data || data.data.length === 0) {
+      setParsedData(null)
+      setStats(null)
+      setPattern(null)
+      return
+    }
+
+    setFileData(null) // Clear file data when using manual entry
+    setParsedData(data)
+    
+    // Generate statistics
+    const dataStats = generateDataStats(data)
+    setStats(dataStats)
+    
+    // Extract fractal parameters from data
+    const params = dataToFractalParams(data)
+    setFractalParams(params)
+    
+    // Generate colors from data
+    const colors = generateDataColors(data, 6)
+    setDataColors(colors)
   }
 
   // Generate pattern from data
@@ -370,14 +397,47 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
 
   return (
     <div className="space-y-6">
-      {/* File Upload Section */}
+      {/* Data Input Section */}
       <div className="bg-white rounded-3xl shadow-lg p-8">
-        <h2 className="font-serif text-2xl font-bold text-gray-800 mb-6">Upload Your Data</h2>
+        <h2 className="font-serif text-2xl font-bold text-gray-800 mb-6">Add Your Data</h2>
         
-        <FileUpload 
-          onFileUpload={handleFileUpload}
-          acceptedTypes=".csv,.json,.txt"
-        />
+        {/* Input Mode Tabs */}
+        <div className="flex gap-2 mb-6 bg-gray-100 rounded-2xl p-1">
+          <button
+            onClick={() => setInputMode('upload')}
+            className={`flex-1 px-4 py-3 rounded-xl font-medium transition-all flex items-center justify-center gap-2 ${
+              inputMode === 'upload'
+                ? 'bg-white text-blue-600 shadow-md'
+                : 'text-gray-600 hover:text-gray-800'
+            }`}
+          >
+            <Upload className="w-5 h-5" />
+            Upload File
+          </button>
+          <button
+            onClick={() => setInputMode('manual')}
+            className={`flex-1 px-4 py-3 rounded-xl font-medium transition-all flex items-center justify-center gap-2 ${
+              inputMode === 'manual'
+                ? 'bg-white text-blue-600 shadow-md'
+                : 'text-gray-600 hover:text-gray-800'
+            }`}
+          >
+            <Keyboard className="w-5 h-5" />
+            Manual Entry
+          </button>
+        </div>
+        
+        {/* File Upload or Manual Entry */}
+        {inputMode === 'upload' ? (
+          <FileUpload 
+            onFileUpload={handleFileUpload}
+            acceptedTypes=".csv,.json,.txt"
+          />
+        ) : (
+          <ManualDataEntry 
+            onDataSubmit={handleManualDataSubmit}
+          />
+        )}
         
         <div className="flex gap-4 mt-6">
           <button 
