@@ -47,11 +47,12 @@ const HeroSection = () => {
       {/* Background Grid - Fixed grid layout in top section */}
       {backgroundImages.length > 0 && (
         <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 p-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-6">
             {backgroundImages.slice(0, 8).map((img, index) => (
               <div
                 key={`hero-bg-${img.id}`}
-                className="relative aspect-square opacity-[0.30] hover:opacity-[0.40] transition-all duration-300 transform hover:scale-110"
+                className="relative aspect-square opacity-[0.30] hover:opacity-[0.40] transition-all duration-300 transform hover:scale-105"
+                style={{ maxWidth: '120px', maxHeight: '120px' }}
               >
                 <img
                   src={img.url}
