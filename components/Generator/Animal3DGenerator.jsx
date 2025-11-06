@@ -289,11 +289,11 @@ export default function Animal3DGenerator({ parsedData }) {
               {/* Assembly Instructions */}
               <div className="bg-green-50 rounded-xl p-4">
                 <h4 className="font-semibold text-gray-800 mb-3">Assembly Instructions</h4>
-                <ol className="list-decimal list-inside space-y-2 text-sm text-gray-700">
+                <ul className="list-none space-y-2 text-sm text-gray-700">
                   {animalPattern.assemblyInstructions.map((instruction, index) => (
                     <li key={index}>{instruction}</li>
                   ))}
-                </ol>
+                </ul>
               </div>
 
               {/* Color Palette */}
