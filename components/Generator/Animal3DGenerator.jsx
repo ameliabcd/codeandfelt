@@ -1,19 +1,20 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { Download, Sparkles, Heart, Info } from 'lucide-react'
-import { animalTemplates, generateAnimal3DPattern } from '../../lib/animal3DPatterns'
+import { generateAnimal3DPattern } from '../../lib/animal3DPatterns'
 import { generateDataColors, dataToFractalParams } from '../../lib/dataParser'
-import { dataToAnimalParams } from '../../lib/animal3DPatterns'
 import { exportAnimal3DPatternSVG, downloadSVG } from '../../lib/svgExporter'
 import { generateAnimal3DModel } from '../../lib/animal3DModel'
 
 export default function Animal3DGenerator({ parsedData }) {
-  const [selectedAnimal, setSelectedAnimal] = useState('bear')
   const [animalPattern, setAnimalPattern] = useState(null)
   const [animalModel, setAnimalModel] = useState(null)
   const [colors, setColors] = useState(null)
   const [fractalParams, setFractalParams] = useState(null)
   const [isGenerating, setIsGenerating] = useState(false)
+  
+  // Always use bear
+  const selectedAnimal = 'bear'
 
   // Generate colors and fractal params from data
   useEffect(() => {
@@ -42,17 +43,16 @@ export default function Animal3DGenerator({ parsedData }) {
       
       setTimeout(() => {
         try {
-          console.log('Generating animal pattern:', { selectedAnimal, parsedData, colors, fractalParams })
+          console.log('Generating bear pattern:', { parsedData, colors, fractalParams })
           const pattern = generateAnimal3DPattern(selectedAnimal, parsedData, colors, fractalParams)
           console.log('Generated pattern:', pattern)
           
           if (pattern && pattern.patternPieces && Object.keys(pattern.patternPieces).length > 0) {
             setAnimalPattern(pattern)
             
-            // Generate 3D model visualization
+            // Generate 3D model visualization (always bear, fixed sizes)
             try {
-              const params = dataToAnimalParams(parsedData, fractalParams)
-              const model = generateAnimal3DModel(selectedAnimal, params, colors)
+              const model = generateAnimal3DModel(parsedData)
               setAnimalModel(model)
             } catch (error) {
               console.error('Error generating 3D model:', error)
@@ -80,48 +80,27 @@ export default function Animal3DGenerator({ parsedData }) {
     }
   }, [parsedData, colors, fractalParams, selectedAnimal])
 
-  // Export animal pattern as SVG
+  // Export animal pattern as SVG (including 3D model)
   const exportAnimalPattern = () => {
     if (!animalPattern) return
     
-    const svgContent = exportAnimal3DPatternSVG(animalPattern)
-    const filename = `felted-${selectedAnimal}-${Date.now()}.svg`
+    const svgContent = exportAnimal3DPatternSVG(animalPattern, animalModel)
+    const filename = `felted-bear-${Date.now()}.svg`
     downloadSVG(svgContent, filename)
   }
 
   return (
     <div className="space-y-6">
-      {/* Animal Selection */}
+      {/* Info Header */}
       <div className="bg-white rounded-3xl shadow-lg p-8">
         <h2 className="font-serif text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
           <Heart className="w-6 h-6 text-pink-500" />
-          3D Felted Animals
+          3D Felted Bear
         </h2>
         
         <p className="text-gray-600 mb-6">
-          Generate 3D felting patterns for animals from your data! Each animal has multiple pattern pieces with assembly instructions.
+          Generate a 3D felting pattern for a bear from your data! The overall size of the bear is based on your data values.
         </p>
-
-        {/* Animal Selection Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
-          {animalTemplates.map((animal) => (
-            <button
-              key={animal.id}
-              onClick={() => setSelectedAnimal(animal.id)}
-              className={`p-4 rounded-xl border-2 transition-all ${
-                selectedAnimal === animal.id
-                  ? 'border-pink-500 bg-pink-50 text-pink-700 shadow-md'
-                  : 'border-gray-200 hover:border-gray-300 text-gray-600'
-              }`}
-            >
-              <div className="text-center">
-                <div className="text-4xl mb-2">{animal.icon}</div>
-                <div className="font-medium text-sm">{animal.name}</div>
-                <div className="text-xs text-gray-500 mt-1">{animal.description}</div>
-              </div>
-            </button>
-          ))}
-        </div>
 
         {/* Info Box */}
         <div className="bg-gradient-to-r from-pink-50 to-purple-50 rounded-xl p-4 border-2 border-pink-200">
@@ -130,11 +109,11 @@ export default function Animal3DGenerator({ parsedData }) {
             <div className="text-sm text-gray-700">
               <p className="font-semibold mb-2">How It Works:</p>
               <ul className="list-disc list-inside space-y-1 text-xs">
-                <li>Your data values control the animal's size, proportions, and features</li>
-                <li>Each animal has multiple pattern pieces (body, head, limbs, etc.)</li>
+                <li>Your data values control the bear's overall size</li>
+                <li>The bear is displayed in true 3D isometric view</li>
+                <li>All proportions are fixed - only the size changes with your data</li>
                 <li>Pattern pieces include seam allowances and color zones</li>
                 <li>Assembly instructions are included with each pattern</li>
-                <li>Different data = Different sized and proportioned animals!</li>
               </ul>
             </div>
           </div>
