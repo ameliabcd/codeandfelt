@@ -17,7 +17,7 @@ export default function ImpactsSection() {
     location: '',
     amount: '',
     category: 'donation',
-    image: null
+    images: []
   })
 
   useEffect(() => {
@@ -38,11 +38,11 @@ export default function ImpactsSection() {
     setFormData({
       title: impact.title,
       description: impact.description,
-      date: impact.date,
+      date: impact.date || '',
       location: impact.location || '',
       amount: impact.amount || '',
       category: impact.category || 'donation',
-      image: impact.image || null
+      images: impact.images || (impact.image ? [impact.image] : []) // Support old single image format
     })
     setIsEditing(true)
     setShowAddForm(true)
@@ -53,62 +53,69 @@ export default function ImpactsSection() {
     setFormData({
       title: '',
       description: '',
-      date: new Date().toISOString().split('T')[0],
+      date: '',
       location: '',
       amount: '',
       category: 'donation',
-      image: null
+      images: []
     })
     setIsEditing(false)
     setShowAddForm(true)
   }
 
   const handleImageUpload = async (event) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      alert('Please select an image file')
-      return
-    }
-
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      alert('Image is too large. Please select an image smaller than 5MB.')
-      return
-    }
+    const files = Array.from(event.target.files || [])
+    if (files.length === 0) return
 
     setIsUploadingImage(true)
 
     try {
-      // Convert to base64 data URL
-      const reader = new FileReader()
-      const imageData = await new Promise((resolve, reject) => {
-        reader.onload = (e) => resolve(e.target.result)
-        reader.onerror = reject
-        reader.readAsDataURL(file)
-      })
+      const newImages = []
+      
+      for (const file of files) {
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+          alert(`${file.name} is not an image file. Skipping.`)
+          continue
+        }
 
-      setFormData({ ...formData, image: imageData })
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          alert(`${file.name} is too large. Please select images smaller than 5MB. Skipping.`)
+          continue
+        }
+
+        // Convert to base64 data URL
+        const reader = new FileReader()
+        const imageData = await new Promise((resolve, reject) => {
+          reader.onload = (e) => resolve(e.target.result)
+          reader.onerror = reject
+          reader.readAsDataURL(file)
+        })
+
+        newImages.push(imageData)
+      }
+
+      setFormData({ ...formData, images: [...formData.images, ...newImages] })
     } catch (error) {
-      console.error('Error uploading image:', error)
-      alert('Error uploading image. Please try again.')
+      console.error('Error uploading images:', error)
+      alert('Error uploading images. Please try again.')
     } finally {
       setIsUploadingImage(false)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
     }
   }
 
-  const handleRemoveImage = () => {
-    setFormData({ ...formData, image: null })
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
-    }
+  const handleRemoveImage = (index) => {
+    const newImages = formData.images.filter((_, i) => i !== index)
+    setFormData({ ...formData, images: newImages })
   }
 
   const handleSave = async () => {
-    if (!formData.title || !formData.description || !formData.date) {
-      alert('Please fill in title, description, and date')
+    if (!formData.title || !formData.description) {
+      alert('Please fill in title and description')
       return
     }
 
@@ -117,11 +124,11 @@ export default function ImpactsSection() {
         id: editingId || Date.now().toString(),
         title: formData.title,
         description: formData.description,
-        date: formData.date,
+        date: formData.date || null,
         location: formData.location,
         amount: formData.amount,
         category: formData.category,
-        image: formData.image,
+        images: formData.images,
         createdAt: editingId ? impacts.find(i => i.id === editingId)?.createdAt : new Date().toISOString(),
         updatedAt: new Date().toISOString()
       }
@@ -160,7 +167,7 @@ export default function ImpactsSection() {
       location: '',
       amount: '',
       category: 'donation',
-      image: null
+      images: []
     })
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
@@ -248,7 +255,7 @@ export default function ImpactsSection() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Date *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Date (Optional)</label>
                 <input
                   type="date"
                   value={formData.date}
@@ -287,51 +294,59 @@ export default function ImpactsSection() {
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Image</label>
-                {formData.image ? (
-                  <div className="relative">
-                    <img
-                      src={formData.image}
-                      alt="Preview"
-                      className="w-full max-w-md h-48 object-cover rounded-lg border-2 border-gray-300 mb-2"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleRemoveImage}
-                      className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2 hover:bg-red-600 transition-colors"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="hidden"
-                      id="impact-image-upload"
-                    />
-                    <label
-                      htmlFor="impact-image-upload"
-                      className="cursor-pointer flex flex-col items-center gap-2"
-                    >
-                      {isUploadingImage ? (
-                        <>
-                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500"></div>
-                          <span className="text-sm text-gray-600">Uploading...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Upload className="w-8 h-8 text-gray-400" />
-                          <span className="text-sm text-gray-600">Click to upload an image</span>
-                          <span className="text-xs text-gray-500">Max 5MB, JPG/PNG/GIF</span>
-                        </>
-                      )}
-                    </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Images</label>
+                
+                {/* Image Preview Grid */}
+                {formData.images.length > 0 && (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                    {formData.images.map((image, index) => (
+                      <div key={index} className="relative">
+                        <img
+                          src={image}
+                          alt={`Preview ${index + 1}`}
+                          className="w-full h-32 object-cover rounded-lg border-2 border-gray-300"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveImage(index)}
+                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1.5 hover:bg-red-600 transition-colors"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 )}
+
+                {/* Upload Area */}
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageUpload}
+                    className="hidden"
+                    id="impact-image-upload"
+                  />
+                  <label
+                    htmlFor="impact-image-upload"
+                    className="cursor-pointer flex flex-col items-center gap-2"
+                  >
+                    {isUploadingImage ? (
+                      <>
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500"></div>
+                        <span className="text-sm text-gray-600">Uploading...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-8 h-8 text-gray-400" />
+                        <span className="text-sm text-gray-600">Click to upload images</span>
+                        <span className="text-xs text-gray-500">Max 5MB each, JPG/PNG/GIF. You can select multiple images.</span>
+                      </>
+                    )}
+                  </label>
+                </div>
               </div>
             </div>
             <div className="flex gap-3 mt-4">
@@ -379,16 +394,40 @@ export default function ImpactsSection() {
                 key={impact.id}
                 className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-100 hover:shadow-xl transition-shadow"
               >
-                {/* Image */}
-                {impact.image && (
-                  <div className="mb-4 rounded-lg overflow-hidden">
-                    <img
-                      src={impact.image}
-                      alt={impact.title}
-                      className="w-full h-48 object-cover"
-                    />
+                {/* Images */}
+                {(impact.images && impact.images.length > 0) || impact.image ? (
+                  <div className="mb-4">
+                    {impact.images && impact.images.length > 0 ? (
+                      // Multiple images - show first as main, rest in grid
+                      <div className="space-y-2">
+                        <img
+                          src={impact.images[0]}
+                          alt={impact.title}
+                          className="w-full h-48 object-cover rounded-lg"
+                        />
+                        {impact.images.length > 1 && (
+                          <div className="grid grid-cols-2 gap-2">
+                            {impact.images.slice(1).map((img, idx) => (
+                              <img
+                                key={idx}
+                                src={img}
+                                alt={`${impact.title} ${idx + 2}`}
+                                className="w-full h-24 object-cover rounded-lg"
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      // Legacy single image support
+                      <img
+                        src={impact.image}
+                        alt={impact.title}
+                        className="w-full h-48 object-cover rounded-lg"
+                      />
+                    )}
                   </div>
-                )}
+                ) : null}
 
                 {/* Category Badge */}
                 <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium mb-4 border ${getCategoryColor(impact.category)}`}>
