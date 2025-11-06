@@ -3,11 +3,14 @@ import { useState, useEffect } from 'react'
 import { Download, Sparkles, Heart, Info } from 'lucide-react'
 import { animalTemplates, generateAnimal3DPattern } from '../../lib/animal3DPatterns'
 import { generateDataColors, dataToFractalParams } from '../../lib/dataParser'
+import { dataToAnimalParams } from '../../lib/animal3DPatterns'
 import { exportAnimal3DPatternSVG, downloadSVG } from '../../lib/svgExporter'
+import { generateAnimal3DModel } from '../../lib/animal3DModel'
 
 export default function Animal3DGenerator({ parsedData }) {
   const [selectedAnimal, setSelectedAnimal] = useState('bear')
   const [animalPattern, setAnimalPattern] = useState(null)
+  const [animalModel, setAnimalModel] = useState(null)
   const [colors, setColors] = useState(null)
   const [fractalParams, setFractalParams] = useState(null)
   const [isGenerating, setIsGenerating] = useState(false)
@@ -45,10 +48,22 @@ export default function Animal3DGenerator({ parsedData }) {
           
           if (pattern && pattern.patternPieces && Object.keys(pattern.patternPieces).length > 0) {
             setAnimalPattern(pattern)
-            console.log('Pattern set successfully')
+            
+            // Generate 3D model visualization
+            try {
+              const params = dataToAnimalParams(parsedData, fractalParams)
+              const model = generateAnimal3DModel(selectedAnimal, params, colors)
+              setAnimalModel(model)
+            } catch (error) {
+              console.error('Error generating 3D model:', error)
+              setAnimalModel(null)
+            }
+            
+            console.log('Pattern and model set successfully')
           } else {
             console.error('Pattern generation returned null or invalid pattern:', pattern)
             setAnimalPattern(null)
+            setAnimalModel(null)
           }
           setIsGenerating(false)
         } catch (error) {
@@ -162,6 +177,67 @@ export default function Animal3DGenerator({ parsedData }) {
             </div>
           ) : (
             <div className="space-y-6">
+              {/* 3D Model Visualization */}
+              {animalModel && (
+                <div className="bg-gradient-to-br from-pink-50 to-purple-50 rounded-xl p-6 border-2 border-purple-200">
+                  <h4 className="font-semibold text-gray-800 mb-4 text-center">3D Model Preview</h4>
+                  <div className="flex justify-center items-center">
+                    <svg
+                      width={animalModel.width}
+                      height={animalModel.height}
+                      viewBox={animalModel.viewBox}
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="border-2 border-gray-300 rounded-lg bg-white shadow-lg"
+                    >
+                      {animalModel.parts.map((part, index) => {
+                        if (part.type === 'ellipse') {
+                          return (
+                            <ellipse
+                              key={index}
+                              cx={part.cx}
+                              cy={part.cy}
+                              rx={part.rx}
+                              ry={part.ry}
+                              fill={part.fill}
+                              stroke={part.stroke}
+                              strokeWidth={part.strokeWidth}
+                              transform={part.transform || ''}
+                            />
+                          )
+                        } else if (part.type === 'circle') {
+                          return (
+                            <circle
+                              key={index}
+                              cx={part.cx}
+                              cy={part.cy}
+                              r={part.r}
+                              fill={part.fill}
+                              stroke={part.stroke}
+                              strokeWidth={part.strokeWidth || 0}
+                            />
+                          )
+                        } else if (part.type === 'path') {
+                          return (
+                            <path
+                              key={index}
+                              d={part.d}
+                              fill={part.fill || 'none'}
+                              stroke={part.stroke}
+                              strokeWidth={part.strokeWidth}
+                              strokeLinecap={part.strokeLinecap || 'butt'}
+                            />
+                          )
+                        }
+                        return null
+                      })}
+                    </svg>
+                  </div>
+                  <p className="text-xs text-gray-600 text-center mt-4">
+                    This is a side view of your {animalPattern.animalName}. Size and proportions are based on your data values.
+                  </p>
+                </div>
+              )}
+
               {/* Measurements */}
               <div className="bg-blue-50 rounded-xl p-4">
                 <h4 className="font-semibold text-gray-800 mb-3">Measurements</h4>
