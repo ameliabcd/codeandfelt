@@ -189,8 +189,8 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
             )
             break
           case 'koch':
-            // Limit to 2 iterations max for better performance (3-fold symmetry = 3 * 4^2 = 48 segments)
-            const kochIterations = Math.min(2, Math.max(1, Math.floor(1 + (fractalParams.maxIterations / 200))))
+            // Limit to 1 iteration max for fast rendering (3-fold symmetry = 3 * 4^1 = 12 segments)
+            const kochIterations = 1
             rawPattern = generateKochSnowflake(
               patternSize, patternSize,
               kochIterations
