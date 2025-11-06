@@ -1,45 +1,67 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
 import { Upload, X, Image as ImageIcon } from 'lucide-react'
+import { saveImages, loadImages, removeImage as removeImageFromDB, clearImages } from '../../lib/imageStorage'
 
 const WorkGallery = () => {
   const [images, setImages] = useState([])
   const [isUploading, setIsUploading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const fileInputRef = useRef(null)
 
-  // Load images from localStorage on mount
+  // Load images from IndexedDB on mount
   useEffect(() => {
-    const savedImages = localStorage.getItem('workGalleryImages')
-    if (savedImages) {
+    const loadImagesFromStorage = async () => {
       try {
-        setImages(JSON.parse(savedImages))
+        setIsLoading(true)
+        const savedImages = await loadImages()
+        setImages(savedImages || [])
       } catch (error) {
-        console.error('Error loading saved images:', error)
+        console.error('Error loading images:', error)
+        // Fallback to localStorage for migration
+        try {
+          const localStorageImages = localStorage.getItem('workGalleryImages')
+          if (localStorageImages) {
+            const parsed = JSON.parse(localStorageImages)
+            setImages(parsed)
+            // Migrate to IndexedDB
+            if (parsed.length > 0) {
+              await saveImages(parsed)
+              localStorage.removeItem('workGalleryImages')
+            }
+          }
+        } catch (e) {
+          console.error('Error migrating from localStorage:', e)
+        }
+      } finally {
+        setIsLoading(false)
       }
     }
+    loadImagesFromStorage()
   }, [])
 
-  // Save images to localStorage whenever they change
+  // Save images to IndexedDB whenever they change
   useEffect(() => {
-    if (images.length > 0) {
-      try {
-        const imagesJson = JSON.stringify(images)
-        localStorage.setItem('workGalleryImages', imagesJson)
-        // Dispatch custom event to update HeroSection
-        window.dispatchEvent(new Event('workGalleryUpdated'))
-      } catch (error) {
-        // Handle localStorage quota exceeded
-        if (error.name === 'QuotaExceededError' || error.code === 22) {
-          console.error('localStorage quota exceeded. Cannot save all images.')
-          alert('Storage limit reached! Please remove some images before uploading more. Each image is stored as base64 which uses significant storage space.')
-        } else {
-          console.error('Error saving images to localStorage:', error)
+    if (!isLoading) {
+      const saveImagesToStorage = async () => {
+        try {
+          if (images.length > 0) {
+            await saveImages(images)
+          } else {
+            await clearImages()
+          }
+          // Dispatch custom event to update HeroSection
+          window.dispatchEvent(new Event('workGalleryUpdated'))
+        } catch (error) {
+          console.error('Error saving images:', error)
+          if (error.name === 'QuotaExceededError' || error.code === 22) {
+            alert('Storage limit reached! Please remove some images before uploading more.')
+          }
         }
       }
-    } else {
-      localStorage.removeItem('workGalleryImages')
+      saveImagesToStorage()
     }
-  }, [images])
+  }, [images, isLoading])
 
   const handleFileSelect = async (event) => {
     const files = Array.from(event.target.files)
@@ -79,27 +101,8 @@ const WorkGallery = () => {
         })
       }
 
-      // Try to add new images
-      const updatedImages = [...images, ...newImages]
-      
-      // Check if we can save to localStorage before updating state
-      try {
-        const testJson = JSON.stringify(updatedImages)
-        // Check if it's too large (rough estimate: 5MB limit)
-        if (testJson.length > 4 * 1024 * 1024) {
-          alert(`Cannot upload ${newImages.length} more image(s). Storage limit reached. Please remove some existing images first. Each image is stored as base64 which uses significant storage space.`)
-          return
-        }
-        setImages(updatedImages)
-      } catch (error) {
-        if (error.name === 'QuotaExceededError' || error.code === 22) {
-          alert('Storage limit reached! Please remove some existing images before uploading more. Each image is stored as base64 which uses significant storage space.')
-        } else {
-          console.error('Error checking storage:', error)
-          alert('Error checking storage space. Please try again.')
-        }
-        return
-      }
+      // Add new images (IndexedDB can handle much more than localStorage)
+      setImages(prev => [...prev, ...newImages])
       
       // Reset file input
       if (fileInputRef.current) {
@@ -113,8 +116,15 @@ const WorkGallery = () => {
     }
   }
 
-  const handleRemoveImage = (imageId) => {
-    setImages(prev => prev.filter(img => img.id !== imageId))
+  const handleRemoveImage = async (imageId) => {
+    try {
+      await removeImageFromDB(imageId)
+      setImages(prev => prev.filter(img => img.id !== imageId))
+    } catch (error) {
+      console.error('Error removing image:', error)
+      // Still update UI even if DB removal fails
+      setImages(prev => prev.filter(img => img.id !== imageId))
+    }
   }
 
   const handleUploadClick = () => {
@@ -153,7 +163,7 @@ const WorkGallery = () => {
             {isUploading ? 'Uploading...' : 'Upload Photos'}
           </button>
           <p className="text-sm text-gray-500 text-center mt-2">
-            You can upload multiple images at once (max 5MB per image)
+            You can upload multiple images at once (max 5MB per image). Images are stored in IndexedDB for larger capacity.
           </p>
         </div>
 

@@ -5,41 +5,39 @@ import Link from 'next/link'
 const HeroSection = () => {
   const [backgroundImages, setBackgroundImages] = useState([])
 
-  // Load images from localStorage for background
-  const loadBackgroundImages = () => {
-    const savedImages = localStorage.getItem('workGalleryImages')
-    if (savedImages) {
+  // Load images from IndexedDB for background
+  const loadBackgroundImages = async () => {
+    try {
+      const { loadImages } = await import('../../lib/imageStorage')
+      const images = await loadImages()
+      setBackgroundImages(images.slice(0, 8)) // Show up to 8 images
+    } catch (error) {
+      console.error('Error loading background images:', error)
+      // Fallback to localStorage for migration
       try {
-        const images = JSON.parse(savedImages)
-        setBackgroundImages(images.slice(0, 8)) // Show up to 8 images
-      } catch (error) {
-        console.error('Error loading background images:', error)
+        const savedImages = localStorage.getItem('workGalleryImages')
+        if (savedImages) {
+          const images = JSON.parse(savedImages)
+          setBackgroundImages(images.slice(0, 8))
+        } else {
+          setBackgroundImages([])
+        }
+      } catch (e) {
+        setBackgroundImages([])
       }
-    } else {
-      setBackgroundImages([])
     }
   }
 
   useEffect(() => {
     loadBackgroundImages()
-
-    // Listen for storage changes (when images are uploaded)
-    const handleStorageChange = (e) => {
-      if (e.key === 'workGalleryImages') {
-        loadBackgroundImages()
-      }
-    }
-
-    window.addEventListener('storage', handleStorageChange)
     
-    // Also listen for custom event from WorkGallery component
+    // Listen for custom event from WorkGallery component
     const handleCustomStorage = () => {
       loadBackgroundImages()
     }
     window.addEventListener('workGalleryUpdated', handleCustomStorage)
 
     return () => {
-      window.removeEventListener('storage', handleStorageChange)
       window.removeEventListener('workGalleryUpdated', handleCustomStorage)
     }
   }, [])
