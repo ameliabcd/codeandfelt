@@ -79,7 +79,18 @@ export default function Animal3DGenerator({ parsedData }) {
         } catch (error) {
           console.error('Error generating animal pattern:', error)
           console.error('Error stack:', error.stack)
+          console.error('Error details:', {
+            selectedAnimal,
+            hasParsedData: !!parsedData,
+            hasColors: !!colors,
+            hasFractalParams: !!fractalParams,
+            hasAnimalParams: !!animalParams,
+            parsedDataKeys: parsedData ? Object.keys(parsedData) : null,
+            colorsLength: colors ? colors.length : null,
+            fractalParamsKeys: fractalParams ? Object.keys(fractalParams) : null
+          })
           setAnimalPattern(null)
+          setAnimalModel(null)
           setIsGenerating(false)
         }
       }, 100)
@@ -352,10 +363,14 @@ export default function Animal3DGenerator({ parsedData }) {
       )}
 
       {/* Error State */}
-      {parsedData && !isGenerating && !animalPattern && colors && fractalParams && (
+      {parsedData && !isGenerating && !animalPattern && colors && fractalParams && selectedAnimal && animalParams && (
         <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded">
           <p className="text-sm text-red-700">
             <strong>Error:</strong> Failed to generate animal pattern. Check console for details.
+            <br />
+            <span className="text-xs mt-2 block">
+              Debug: selectedAnimal={selectedAnimal}, hasAnimalParams={!!animalParams}, hasColors={!!colors}, hasFractalParams={!!fractalParams}
+            </span>
           </p>
         </div>
       )}
