@@ -33,7 +33,7 @@ function getWallpaperIcon(groupId) {
 }
 
 export default function DataPatternGenerator({ selectedColors, onPatternGenerated }) {
-  const [inputMode, setInputMode] = useState('upload') // 'upload' or 'manual'
+  const [inputMode, setInputMode] = useState('manual') // 'upload' or 'manual'
   const [fileData, setFileData] = useState(null)
   const [parsedData, setParsedData] = useState(null)
   const [pattern, setPattern] = useState(null)
@@ -406,17 +406,6 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
         {/* Input Mode Tabs */}
         <div className="flex gap-2 mb-6 bg-gray-100 rounded-2xl p-1">
           <button
-            onClick={() => setInputMode('upload')}
-            className={`flex-1 px-4 py-3 rounded-xl font-medium transition-all flex items-center justify-center gap-2 ${
-              inputMode === 'upload'
-                ? 'bg-white text-blue-600 shadow-md'
-                : 'text-gray-600 hover:text-gray-800'
-            }`}
-          >
-            <Upload className="w-5 h-5" />
-            Upload File
-          </button>
-          <button
             onClick={() => setInputMode('manual')}
             className={`flex-1 px-4 py-3 rounded-xl font-medium transition-all flex items-center justify-center gap-2 ${
               inputMode === 'manual'
@@ -427,17 +416,28 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
             <Keyboard className="w-5 h-5" />
             Manual Entry
           </button>
+          <button
+            onClick={() => setInputMode('upload')}
+            className={`flex-1 px-4 py-3 rounded-xl font-medium transition-all flex items-center justify-center gap-2 ${
+              inputMode === 'upload'
+                ? 'bg-white text-blue-600 shadow-md'
+                : 'text-gray-600 hover:text-gray-800'
+            }`}
+          >
+            <Upload className="w-5 h-5" />
+            Upload File
+          </button>
         </div>
         
-        {/* File Upload or Manual Entry */}
-        {inputMode === 'upload' ? (
+        {/* Manual Entry or File Upload */}
+        {inputMode === 'manual' ? (
+          <ManualDataEntry 
+            onDataSubmit={handleManualDataSubmit}
+          />
+        ) : (
           <FileUpload 
             onFileUpload={handleFileUpload}
             acceptedTypes=".csv,.json,.txt"
-          />
-        ) : (
-          <ManualDataEntry 
-            onDataSubmit={handleManualDataSubmit}
           />
         )}
         

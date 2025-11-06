@@ -1,11 +1,88 @@
 'use client'
 import { useState } from 'react'
-import { Keyboard, Plus, Trash2, Download } from 'lucide-react'
+import { Keyboard, Plus, Trash2, Download, Shuffle } from 'lucide-react'
+
+// Creative prompts for data entry
+const dataPrompts = [
+  {
+    question: "What's your birthday? (month, day, year)",
+    example: "3, 15, 2000",
+    format: 'single',
+    description: "Transform your special date into a unique pattern!"
+  },
+  {
+    question: "What's your exercise data? (steps, miles, calories)",
+    example: "8523, 4.2, 312",
+    format: 'rows',
+    description: "Turn your fitness journey into art!"
+  },
+  {
+    question: "What are your favorite numbers?",
+    example: "7\n42\n13\n21\n99",
+    format: 'single',
+    description: "Your lucky numbers become a pattern!"
+  },
+  {
+    question: "What's your daily routine? (hours of sleep, work, exercise)",
+    example: "Sleep, Work, Exercise\n8, 8, 1\n7.5, 9, 0.5\n8, 7, 1.5",
+    format: 'table',
+    description: "Visualize your daily life patterns!"
+  },
+  {
+    question: "What's your mood this week? (rate 1-10)",
+    example: "7\n8\n6\n9\n7\n8\n7",
+    format: 'single',
+    description: "Capture your emotional journey!"
+  },
+  {
+    question: "What's your spending data? (food, entertainment, savings)",
+    example: "Food, Entertainment, Savings\n150, 75, 200\n180, 50, 220\n120, 100, 250",
+    format: 'table',
+    description: "Turn your budget into beautiful patterns!"
+  },
+  {
+    question: "What's your screen time? (hours per day)",
+    example: "6.5\n7.2\n5.8\n8.1\n6.3\n7.5\n6.9",
+    format: 'single',
+    description: "Your digital life as art!"
+  },
+  {
+    question: "What's your reading data? (pages, minutes, books)",
+    example: "25, 30, 0.5\n50, 60, 1\n30, 45, 0.75",
+    format: 'rows',
+    description: "Pages turn into patterns!"
+  },
+  {
+    question: "What's your coffee consumption? (cups per day)",
+    example: "2\n3\n2\n4\n1\n2\n3",
+    format: 'single',
+    description: "Your caffeine story visualized!"
+  },
+  {
+    question: "What's your travel data? (miles, hours, cost)",
+    example: "Miles, Hours, Cost\n250, 4, 45\n180, 3, 35\n320, 5, 60",
+    format: 'table',
+    description: "Journey distances become designs!"
+  },
+  {
+    question: "What's your study time? (hours per subject)",
+    example: "Math, Science, English\n3, 2, 1.5\n2.5, 3, 2\n4, 1, 2.5",
+    format: 'table',
+    description: "Your learning journey as art!"
+  },
+  {
+    question: "What's your heart rate? (resting, active, peak)",
+    example: "65, 120, 165\n68, 125, 170\n66, 118, 160",
+    format: 'rows',
+    description: "Your heartbeat becomes a pattern!"
+  }
+]
 
 export default function ManualDataEntry({ onDataSubmit }) {
   const [manualData, setManualData] = useState([{ value: '' }])
   const [format, setFormat] = useState('single') // 'single', 'rows', 'table'
   const [delimiter, setDelimiter] = useState(',')
+  const [currentPrompt, setCurrentPrompt] = useState(dataPrompts[0])
 
   const handleAddRow = () => {
     setManualData([...manualData, { value: '' }])
@@ -88,6 +165,29 @@ export default function ManualDataEntry({ onDataSubmit }) {
     ]
     setManualData(exampleData.map(val => ({ value: val })))
     setFormat('single')
+  }
+
+  const handleShufflePrompt = () => {
+    // Get a random prompt different from current
+    let newPrompt
+    do {
+      newPrompt = dataPrompts[Math.floor(Math.random() * dataPrompts.length)]
+    } while (newPrompt === currentPrompt && dataPrompts.length > 1)
+    
+    setCurrentPrompt(newPrompt)
+    setFormat(newPrompt.format)
+    
+    // Parse example data based on format
+    if (newPrompt.format === 'single') {
+      const exampleValues = newPrompt.example.split('\n')
+      setManualData(exampleValues.map(val => ({ value: val.trim() })))
+    } else if (newPrompt.format === 'rows') {
+      const exampleValues = newPrompt.example.split('\n')
+      setManualData(exampleValues.map(val => ({ value: val.trim() })))
+    } else if (newPrompt.format === 'table') {
+      const exampleValues = newPrompt.example.split('\n')
+      setManualData(exampleValues.map(val => ({ value: val.trim() })))
+    }
   }
 
   return (
@@ -173,6 +273,31 @@ export default function ManualDataEntry({ onDataSubmit }) {
           </div>
         </div>
       )}
+
+      {/* Prompt Section */}
+      <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl border-2 border-purple-200">
+        <div className="flex items-start justify-between mb-2">
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-gray-800 mb-1">
+              💡 {currentPrompt.question}
+            </p>
+            <p className="text-xs text-gray-600 italic">
+              {currentPrompt.description}
+            </p>
+          </div>
+          <button
+            onClick={handleShufflePrompt}
+            className="ml-3 p-2 bg-white rounded-lg shadow-sm hover:bg-purple-100 transition-colors"
+            title="Get a new prompt"
+          >
+            <Shuffle className="w-4 h-4 text-purple-600" />
+          </button>
+        </div>
+        <div className="mt-3 p-3 bg-white rounded-lg border border-purple-100">
+          <p className="text-xs text-gray-500 mb-1">Example format:</p>
+          <code className="text-xs text-gray-700 whitespace-pre-wrap">{currentPrompt.example}</code>
+        </div>
+      </div>
 
       {/* Data Entry */}
       <div className="mb-6">
@@ -273,6 +398,12 @@ export default function ManualDataEntry({ onDataSubmit }) {
             <code className="text-gray-700">24.3, 80, 1015</code>
           </div>
         )}
+        <div className="mt-3 pt-3 border-t border-gray-300">
+          <p className="text-xs text-gray-600">
+            ✨ <strong>Each unique set of data creates a unique pattern!</strong> Your values control:
+            fractal zoom, position, colors, and complexity. Try different numbers to see the changes!
+          </p>
+        </div>
       </div>
 
       {/* Submit Button */}
