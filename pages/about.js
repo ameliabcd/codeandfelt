@@ -60,22 +60,20 @@ export default function About() {
             </div>
           </div>
 
-          {/* Blog Section */}
-          <div>
-            <h2 className="font-serif text-4xl font-bold text-center text-gray-800 mb-8">
-              Latest from Our Blog
-            </h2>
-            <BlogList key={refreshKey} refreshKey={refreshKey} />
-          </div>
-
           {/* Our Impacts Section */}
-          <div className="mt-20">
+          <div className="mb-20">
             <ImpactsSection />
           </div>
 
-          {/* Blog Editor */}
-          <div className="mt-20">
-            <BlogEditor onPublish={handleBlogPublished} />
+          {/* Blog Section */}
+          <div>
+            {/* Blog Editor */}
+            <div className="mb-12">
+              <BlogEditor onPublish={handleBlogPublished} />
+            </div>
+
+            {/* Published Blog Posts */}
+            <BlogList key={refreshKey} refreshKey={refreshKey} />
           </div>
         </div>
       </div>
