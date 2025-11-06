@@ -1,22 +1,22 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { Download, Sparkles, Heart, Info } from 'lucide-react'
-import { generateAnimal3DPattern } from '../../lib/animal3DPatterns'
+import { generateAnimal3DPattern, dataToAnimalParams, animalTemplates } from '../../lib/animal3DPatterns'
 import { generateDataColors, dataToFractalParams } from '../../lib/dataParser'
 import { exportAnimal3DPatternSVG, downloadSVG } from '../../lib/svgExporter'
 import { generateAnimal3DModel } from '../../lib/animal3DModel'
+import { selectAnimalFromData } from '../../lib/animalSelector'
 
 export default function Animal3DGenerator({ parsedData }) {
   const [animalPattern, setAnimalPattern] = useState(null)
   const [animalModel, setAnimalModel] = useState(null)
   const [colors, setColors] = useState(null)
   const [fractalParams, setFractalParams] = useState(null)
+  const [selectedAnimal, setSelectedAnimal] = useState('bear')
+  const [animalParams, setAnimalParams] = useState(null)
   const [isGenerating, setIsGenerating] = useState(false)
-  
-  // Always use bear
-  const selectedAnimal = 'bear'
 
-  // Generate colors and fractal params from data
+  // Generate colors, fractal params, and select animal from data
   useEffect(() => {
     if (parsedData && parsedData.data && parsedData.data.length > 0) {
       try {
@@ -25,6 +25,14 @@ export default function Animal3DGenerator({ parsedData }) {
         
         const params = dataToFractalParams(parsedData)
         setFractalParams(params)
+        
+        // Select animal based on data characteristics
+        const animalId = selectAnimalFromData(parsedData, params)
+        setSelectedAnimal(animalId)
+        
+        // Calculate animal parameters
+        const animalParams = dataToAnimalParams(parsedData, params)
+        setAnimalParams(animalParams)
       } catch (error) {
         console.error('Error generating colors/params:', error)
       }
@@ -33,26 +41,28 @@ export default function Animal3DGenerator({ parsedData }) {
       setColors(null)
       setFractalParams(null)
       setAnimalPattern(null)
+      setSelectedAnimal('bear')
+      setAnimalParams(null)
     }
   }, [parsedData])
 
   // Generate animal pattern when data or animal selection changes
   useEffect(() => {
-    if (parsedData && colors && fractalParams) {
+    if (parsedData && colors && fractalParams && selectedAnimal && animalParams) {
       setIsGenerating(true)
       
       setTimeout(() => {
         try {
-          console.log('Generating bear pattern:', { parsedData, colors, fractalParams })
+          console.log('Generating animal pattern:', { selectedAnimal, parsedData, colors, fractalParams, animalParams })
           const pattern = generateAnimal3DPattern(selectedAnimal, parsedData, colors, fractalParams)
           console.log('Generated pattern:', pattern)
           
           if (pattern && pattern.patternPieces && Object.keys(pattern.patternPieces).length > 0) {
             setAnimalPattern(pattern)
             
-            // Generate 3D model visualization (always bear, fixed sizes)
+            // Generate 3D model visualization with selected animal and parameters
             try {
-              const model = generateAnimal3DModel(parsedData)
+              const model = generateAnimal3DModel(parsedData, selectedAnimal, animalParams)
               setAnimalModel(model)
             } catch (error) {
               console.error('Error generating 3D model:', error)
@@ -78,14 +88,14 @@ export default function Animal3DGenerator({ parsedData }) {
       setAnimalPattern(null)
       setIsGenerating(false)
     }
-  }, [parsedData, colors, fractalParams, selectedAnimal])
+  }, [parsedData, colors, fractalParams, selectedAnimal, animalParams])
 
   // Export animal pattern as SVG (including 3D model)
   const exportAnimalPattern = () => {
     if (!animalPattern) return
     
     const svgContent = exportAnimal3DPatternSVG(animalPattern, animalModel)
-    const filename = `felted-bear-${Date.now()}.svg`
+    const filename = `felted-${selectedAnimal}-${Date.now()}.svg`
     downloadSVG(svgContent, filename)
   }
 
@@ -95,11 +105,16 @@ export default function Animal3DGenerator({ parsedData }) {
       <div className="bg-white rounded-3xl shadow-lg p-8">
         <h2 className="font-serif text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
           <Heart className="w-6 h-6 text-pink-500" />
-          3D Felted Bear
+          3D Felted {animalPattern ? animalPattern.animalName : 'Animal'}
+          {animalPattern && (
+            <span className="text-lg font-normal text-gray-600 ml-2">
+              ({animalTemplates.find(a => a.id === selectedAnimal)?.icon || '🐻'})
+            </span>
+          )}
         </h2>
         
         <p className="text-gray-600 mb-6">
-          Generate a 3D felting pattern for a bear from your data! The overall size of the bear is based on your data values.
+          Generate a 3D felting pattern from your data! Different animals are selected based on your data characteristics, and the size and proportions of body parts vary with your data values while keeping each animal recognizable.
         </p>
 
         {/* Info Box */}
