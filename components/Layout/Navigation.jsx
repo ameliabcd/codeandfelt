@@ -9,8 +9,8 @@ const Navigation = () => {
   
   const navItems = [
     { href: '/', label: 'Home' },
-    { href: '/gallery', label: 'Gallery' },
     { href: '/generator', label: 'Generator' },
+    { href: '/gallery', label: 'Patterns' },
     { href: '/about', label: 'Blog' },
     { href: '/contact', label: 'Contact' },
   ]
