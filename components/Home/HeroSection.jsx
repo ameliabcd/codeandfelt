@@ -53,7 +53,7 @@ const HeroSection = () => {
             {backgroundImages.slice(0, 8).map((img, index) => (
               <div
                 key={`hero-bg-${img.id}`}
-                className="relative aspect-square opacity-[0.08] hover:opacity-[0.15] transition-all duration-300 transform hover:scale-110"
+                className="relative aspect-square opacity-[0.30] hover:opacity-[0.40] transition-all duration-300 transform hover:scale-110"
               >
                 <img
                   src={img.url}
@@ -86,11 +86,6 @@ const HeroSection = () => {
               Learn More
             </Link>
           </div>
-        </div>
-        
-        <div className="max-w-4xl mx-auto bg-white rounded-3xl shadow-xl p-8 md:p-16">
-          <div className="text-center text-6xl md:text-8xl mb-4">📊➡️🧶</div>
-          <p className="text-gray-500 text-center">Interactive demo visualization</p>
         </div>
       </div>
     </section>

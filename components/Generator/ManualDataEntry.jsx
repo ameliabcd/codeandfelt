@@ -189,110 +189,8 @@ export default function ManualDataEntry({ onDataSubmit }) {
         <Keyboard className="w-6 h-6 text-blue-500 mr-3" />
         <h2 className="text-2xl font-bold text-gray-800">Manual Data Entry</h2>
       </div>
-      
-      {/* Format Selection */}
-      <div className="mb-6">
-        <label className="block text-sm font-semibold text-gray-700 mb-3">
-          Data Format
-        </label>
-        <div className="grid grid-cols-3 gap-3">
-          <button
-            onClick={() => setFormat('single')}
-            className={`p-4 rounded-xl border-2 transition-all ${
-              format === 'single'
-                ? 'border-blue-500 bg-blue-50'
-                : 'border-gray-200 hover:border-gray-300'
-            }`}
-          >
-            <div className="text-center">
-              <div className="text-2xl mb-2">📊</div>
-              <div className="text-sm font-medium">Single Column</div>
-              <div className="text-xs text-gray-500 mt-1">One value per row</div>
-            </div>
-          </button>
-          
-          <button
-            onClick={() => setFormat('rows')}
-            className={`p-4 rounded-xl border-2 transition-all ${
-              format === 'rows'
-                ? 'border-blue-500 bg-blue-50'
-                : 'border-gray-200 hover:border-gray-300'
-            }`}
-          >
-            <div className="text-center">
-              <div className="text-2xl mb-2">📋</div>
-              <div className="text-sm font-medium">Multiple Values</div>
-              <div className="text-xs text-gray-500 mt-1">Separated values</div>
-            </div>
-          </button>
-          
-          <button
-            onClick={() => setFormat('table')}
-            className={`p-4 rounded-xl border-2 transition-all ${
-              format === 'table'
-                ? 'border-blue-500 bg-blue-50'
-                : 'border-gray-200 hover:border-gray-300'
-            }`}
-          >
-            <div className="text-center">
-              <div className="text-2xl mb-2">📑</div>
-              <div className="text-sm font-medium">Table with Headers</div>
-              <div className="text-xs text-gray-500 mt-1">First row headers</div>
-            </div>
-          </button>
-        </div>
-      </div>
 
-      {/* Delimiter Selection (for multiple values) */}
-      {(format === 'rows' || format === 'table') && (
-        <div className="mb-6">
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Separator
-          </label>
-          <div className="flex space-x-2">
-            {[',', ';', '|', '\t'].map(sep => (
-              <button
-                key={sep}
-                onClick={() => setDelimiter(sep)}
-                className={`px-4 py-2 rounded-lg border-2 font-mono text-lg transition-all ${
-                  delimiter === sep
-                    ? 'border-blue-500 bg-blue-50 text-blue-700'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-              >
-                {sep === '\t' ? 'Tab' : sep}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Prompt Section */}
-      <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl border-2 border-purple-200">
-        <div className="flex items-start justify-between mb-2">
-          <div className="flex-1">
-            <p className="text-sm font-semibold text-gray-800 mb-1">
-              💡 {currentPrompt.question}
-            </p>
-            <p className="text-xs text-gray-600 italic">
-              {currentPrompt.description}
-            </p>
-          </div>
-          <button
-            onClick={handleShufflePrompt}
-            className="ml-3 p-2 bg-white rounded-lg shadow-sm hover:bg-purple-100 transition-colors"
-            title="Get a new prompt"
-          >
-            <Shuffle className="w-4 h-4 text-purple-600" />
-          </button>
-        </div>
-        <div className="mt-3 p-3 bg-white rounded-lg border border-purple-100">
-          <p className="text-xs text-gray-500 mb-1">Example format:</p>
-          <code className="text-xs text-gray-700 whitespace-pre-wrap">{currentPrompt.example}</code>
-        </div>
-      </div>
-
-      {/* How Data Determines Patterns - Collapsible Section */}
+      {/* How Data Determines Patterns - At the top */}
       <div className="mb-6 border-2 border-blue-200 rounded-xl overflow-hidden">
         <button
           onClick={() => setShowDataFlow(!showDataFlow)}
@@ -457,6 +355,108 @@ export default function ManualDataEntry({ onDataSubmit }) {
             </div>
           </div>
         )}
+      </div>
+      
+      {/* Format Selection */}
+      <div className="mb-6">
+        <label className="block text-sm font-semibold text-gray-700 mb-3">
+          Data Format
+        </label>
+        <div className="grid grid-cols-3 gap-3">
+          <button
+            onClick={() => setFormat('single')}
+            className={`p-4 rounded-xl border-2 transition-all ${
+              format === 'single'
+                ? 'border-blue-500 bg-blue-50'
+                : 'border-gray-200 hover:border-gray-300'
+            }`}
+          >
+            <div className="text-center">
+              <div className="text-2xl mb-2">📊</div>
+              <div className="text-sm font-medium">Single Column</div>
+              <div className="text-xs text-gray-500 mt-1">One value per row</div>
+            </div>
+          </button>
+          
+          <button
+            onClick={() => setFormat('rows')}
+            className={`p-4 rounded-xl border-2 transition-all ${
+              format === 'rows'
+                ? 'border-blue-500 bg-blue-50'
+                : 'border-gray-200 hover:border-gray-300'
+            }`}
+          >
+            <div className="text-center">
+              <div className="text-2xl mb-2">📋</div>
+              <div className="text-sm font-medium">Multiple Values</div>
+              <div className="text-xs text-gray-500 mt-1">Separated values</div>
+            </div>
+          </button>
+          
+          <button
+            onClick={() => setFormat('table')}
+            className={`p-4 rounded-xl border-2 transition-all ${
+              format === 'table'
+                ? 'border-blue-500 bg-blue-50'
+                : 'border-gray-200 hover:border-gray-300'
+            }`}
+          >
+            <div className="text-center">
+              <div className="text-2xl mb-2">📑</div>
+              <div className="text-sm font-medium">Table with Headers</div>
+              <div className="text-xs text-gray-500 mt-1">First row headers</div>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      {/* Delimiter Selection (for multiple values) */}
+      {(format === 'rows' || format === 'table') && (
+        <div className="mb-6">
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Separator
+          </label>
+          <div className="flex space-x-2">
+            {[',', ';', '|', '\t'].map(sep => (
+              <button
+                key={sep}
+                onClick={() => setDelimiter(sep)}
+                className={`px-4 py-2 rounded-lg border-2 font-mono text-lg transition-all ${
+                  delimiter === sep
+                    ? 'border-blue-500 bg-blue-50 text-blue-700'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                {sep === '\t' ? 'Tab' : sep}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Prompt Section */}
+      <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl border-2 border-purple-200">
+        <div className="flex items-start justify-between mb-2">
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-gray-800 mb-1">
+              💡 {currentPrompt.question}
+            </p>
+            <p className="text-xs text-gray-600 italic">
+              {currentPrompt.description}
+            </p>
+          </div>
+          <button
+            onClick={handleShufflePrompt}
+            className="ml-3 p-2 bg-white rounded-lg shadow-sm hover:bg-purple-100 transition-colors"
+            title="Get a new prompt"
+          >
+            <Shuffle className="w-4 h-4 text-purple-600" />
+          </button>
+        </div>
+        <div className="mt-3 p-3 bg-white rounded-lg border border-purple-100">
+          <p className="text-xs text-gray-500 mb-1">Example format:</p>
+          <code className="text-xs text-gray-700 whitespace-pre-wrap">{currentPrompt.example}</code>
+        </div>
       </div>
 
       {/* Data Entry */}
