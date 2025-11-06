@@ -16,8 +16,8 @@ export default function Home() {
       
       <div className="gradient-bg">
         <HeroSection />
-        <PatternGrid />
         <WorkGallery />
+        <PatternGrid />
         <NewsletterSignup />
       </div>
     </>

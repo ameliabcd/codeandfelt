@@ -4,7 +4,6 @@ import { Upload, X, Image as ImageIcon } from 'lucide-react'
 
 const WorkGallery = () => {
   const [images, setImages] = useState([])
-  const [floatingImages, setFloatingImages] = useState([])
   const [isUploading, setIsUploading] = useState(false)
   const fileInputRef = useRef(null)
 
@@ -27,33 +26,8 @@ const WorkGallery = () => {
     } else {
       localStorage.removeItem('workGalleryImages')
     }
-  }, [images])
-
-  // Create floating images for background animation
-  useEffect(() => {
-    if (images.length > 0) {
-      const floating = images.map((img, index) => {
-        // Store rotation in the object so it doesn't change on re-render
-        const rotation = Math.random() * 360
-        return {
-          ...img,
-          id: `floating-${img.id}`,
-          // Random starting positions (avoid edges)
-          startX: 10 + Math.random() * 80,
-          startY: 10 + Math.random() * 80,
-          // Random animation duration (15-25 seconds for smooth movement)
-          duration: 15 + Math.random() * 10,
-          // Random delay (0-10 seconds) so they don't all move in sync
-          delay: Math.random() * 10,
-          // Random size (60-120px) - not too small, not too large
-          size: 60 + Math.random() * 60,
-          rotation: rotation,
-        }
-      })
-      setFloatingImages(floating)
-    } else {
-      setFloatingImages([])
-    }
+    // Dispatch custom event to update HeroSection
+    window.dispatchEvent(new Event('workGalleryUpdated'))
   }, [images])
 
   const handleFileSelect = async (event) => {
@@ -117,34 +91,7 @@ const WorkGallery = () => {
   }
 
   return (
-    <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white relative overflow-hidden">
-      {/* Floating Background Images - Fixed to viewport so they float across entire page */}
-      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        {floatingImages.map((floatingImg) => (
-          <div
-            key={floatingImg.id}
-            className="absolute opacity-15 hover:opacity-25 transition-opacity"
-            style={{
-              left: `${floatingImg.startX}%`,
-              top: `${floatingImg.startY}%`,
-              width: `${floatingImg.size}px`,
-              height: `${floatingImg.size}px`,
-              animation: `floatAround ${floatingImg.duration}s ease-in-out infinite`,
-              animationDelay: `${floatingImg.delay}s`,
-            }}
-          >
-            <img
-              src={floatingImg.url}
-              alt=""
-              className="w-full h-full object-cover rounded-lg shadow-lg"
-              style={{
-                transform: `rotate(${floatingImg.rotation}deg)`,
-              }}
-            />
-          </div>
-        ))}
-      </div>
-
+    <section className="py-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       {/* Content */}
       <div className="max-w-7xl mx-auto relative z-10">
         <div className="text-center mb-12">
