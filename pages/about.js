@@ -3,6 +3,7 @@ import { useState } from 'react'
 import Head from 'next/head'
 import BlogEditor from '../components/Blog/BlogEditor'
 import BlogList from '../components/Blog/BlogList'
+import ImpactsSection from '../components/Home/ImpactsSection'
 
 export default function About() {
   const [refreshKey, setRefreshKey] = useState(0)
@@ -61,8 +62,20 @@ export default function About() {
 
           {/* Blog Section */}
           <div>
-            <BlogEditor onPublish={handleBlogPublished} />
+            <h2 className="font-serif text-4xl font-bold text-center text-gray-800 mb-8">
+              Latest from Our Blog
+            </h2>
             <BlogList key={refreshKey} refreshKey={refreshKey} />
+          </div>
+
+          {/* Our Impacts Section */}
+          <div className="mt-20">
+            <ImpactsSection />
+          </div>
+
+          {/* Blog Editor */}
+          <div className="mt-20">
+            <BlogEditor onPublish={handleBlogPublished} />
           </div>
         </div>
       </div>

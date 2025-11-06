@@ -1,6 +1,6 @@
 'use client'
 import { useState, useRef } from 'react'
-import { Upload, X, Save, Image as ImageIcon, Bold, Italic, List, Type } from 'lucide-react'
+import { Upload, X, Save, Image as ImageIcon, Bold, Italic, List, Type, Plus } from 'lucide-react'
 import { saveBlog, loadBlogs } from '../../lib/blogStorage'
 
 export default function BlogEditor({ onPublish }) {
@@ -8,6 +8,7 @@ export default function BlogEditor({ onPublish }) {
   const [content, setContent] = useState('')
   const [images, setImages] = useState([])
   const [isPublishing, setIsPublishing] = useState(false)
+  const [showForm, setShowForm] = useState(false)
   const fileInputRef = useRef(null)
   const contentTextareaRef = useRef(null)
 
@@ -113,6 +114,7 @@ export default function BlogEditor({ onPublish }) {
       setTitle('')
       setContent('')
       setImages([])
+      setShowForm(false)
       
       if (onPublish) {
         onPublish(blog)
@@ -127,9 +129,45 @@ export default function BlogEditor({ onPublish }) {
     }
   }
 
+  const handleCancel = () => {
+    setShowForm(false)
+    setTitle('')
+    setContent('')
+    setImages([])
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
+  if (!showForm) {
+    return (
+      <div className="bg-white rounded-3xl shadow-lg p-8 mb-8">
+        <div className="text-center">
+          <h2 className="font-serif text-3xl font-bold text-gray-800 mb-4">Write a New Blog Post</h2>
+          <p className="text-gray-600 mb-6">Share your thoughts, stories, and updates with our community</p>
+          <button
+            onClick={() => setShowForm(true)}
+            className="inline-flex items-center gap-2 px-6 py-3 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors shadow-lg"
+          >
+            <Plus className="w-5 h-5" />
+            Add a New Blog Post
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="bg-white rounded-3xl shadow-lg p-8 mb-8">
-      <h2 className="font-serif text-3xl font-bold text-gray-800 mb-6">Write a New Blog Post</h2>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="font-serif text-3xl font-bold text-gray-800">Write a New Blog Post</h2>
+        <button
+          onClick={handleCancel}
+          className="text-gray-500 hover:text-gray-700 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      </div>
       
       {/* Title Input */}
       <div className="mb-6">
