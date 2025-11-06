@@ -1,6 +1,6 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
-import { Keyboard, Plus, Trash2, Download, Shuffle } from 'lucide-react'
+import { useState } from 'react'
+import { Keyboard, Plus, Trash2, Download, Shuffle, Info, ChevronDown, ChevronUp } from 'lucide-react'
 
 // Creative prompts for data entry
 const dataPrompts = [
@@ -83,7 +83,7 @@ export default function ManualDataEntry({ onDataSubmit }) {
   const [format, setFormat] = useState('single') // 'single', 'rows', 'table'
   const [delimiter, setDelimiter] = useState(',')
   const [currentPrompt, setCurrentPrompt] = useState(dataPrompts[0])
-  const debounceTimerRef = useRef(null)
+  const [showDataFlow, setShowDataFlow] = useState(false)
 
   const handleAddRow = () => {
     setManualData([...manualData, { value: '' }])
@@ -102,8 +102,7 @@ export default function ManualDataEntry({ onDataSubmit }) {
     setManualData(newData)
   }
 
-  // Parse and submit data
-  const parseAndSubmit = () => {
+  const handleSubmit = () => {
     // Parse manual data based on format
     let parsedData = { data: [], headers: [] }
     
@@ -155,100 +154,8 @@ export default function ManualDataEntry({ onDataSubmit }) {
     }
   }
 
-  // Auto-submit when data changes (with debounce)
-  useEffect(() => {
-    // Clear existing timer
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current)
-    }
-
-    // Check if there's any valid data
-    const hasValidData = manualData.some(row => {
-      if (!row.value.trim()) return false
-      if (format === 'single') {
-        return !isNaN(parseFloat(row.value.trim()))
-      } else {
-        const values = row.value.split(delimiter)
-          .map(v => parseFloat(v.trim()))
-          .filter(v => !isNaN(v))
-        return values.length > 0
-      }
-    })
-
-    // Only auto-submit if there's valid data
-    if (hasValidData) {
-      // Debounce: wait 500ms after user stops typing
-      debounceTimerRef.current = setTimeout(() => {
-        // Parse manual data based on format
-        let parsedData = { data: [], headers: [] }
-        
-        if (format === 'single') {
-          // Single column - each row is a value
-          const numericValues = manualData
-            .map(item => {
-              const val = parseFloat(item.value)
-              return isNaN(val) ? null : val
-            })
-            .filter(val => val !== null)
-          
-          parsedData.data = numericValues.map(val => [val])
-          parsedData.headers = ['value']
-        } else if (format === 'rows') {
-          // Multiple values per row separated by delimiter
-          parsedData.data = manualData
-            .map(item => {
-              const values = item.value.split(delimiter)
-                .map(v => parseFloat(v.trim()))
-                .filter(v => !isNaN(v))
-              return values.length > 0 ? values : null
-            })
-            .filter(row => row !== null)
-          
-          if (parsedData.data.length > 0) {
-            const maxCols = Math.max(...parsedData.data.map(row => row.length))
-            parsedData.headers = Array.from({ length: maxCols }, (_, i) => `column_${i + 1}`)
-          }
-        } else if (format === 'table') {
-          // First row is headers, rest are data
-          if (manualData.length > 1) {
-            const headerRow = manualData[0].value.split(delimiter).map(h => h.trim())
-            parsedData.headers = headerRow
-            
-            parsedData.data = manualData.slice(1)
-              .map(item => {
-                const values = item.value.split(delimiter)
-                  .map(v => parseFloat(v.trim()))
-                  .filter(v => !isNaN(v))
-                return values.length > 0 ? values : null
-              })
-              .filter(row => row !== null)
-          }
-        }
-        
-        if (parsedData.data.length > 0 && onDataSubmit) {
-          onDataSubmit(parsedData)
-        }
-      }, 500)
-    }
-
-    // Cleanup
-    return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current)
-      }
-    }
-  }, [manualData, format, delimiter, onDataSubmit])
-
-  const handleSubmit = () => {
-    parseAndSubmit()
-  }
-
   const handleClear = () => {
     setManualData([{ value: '' }])
-    // Clear any pending submissions
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current)
-    }
   }
 
   const handleLoadExample = () => {
@@ -259,7 +166,6 @@ export default function ManualDataEntry({ onDataSubmit }) {
     ]
     setManualData(exampleData.map(val => ({ value: val })))
     setFormat('single')
-    // Auto-submit will trigger via useEffect
   }
 
   const handleShufflePrompt = () => {
@@ -275,8 +181,6 @@ export default function ManualDataEntry({ onDataSubmit }) {
     // Parse example data based on format
     const exampleValues = newPrompt.example.split('\n')
     setManualData(exampleValues.map(val => ({ value: val.trim() })))
-    
-    // Auto-submit will trigger via useEffect
   }
 
   return (
@@ -388,6 +292,173 @@ export default function ManualDataEntry({ onDataSubmit }) {
         </div>
       </div>
 
+      {/* How Data Determines Patterns - Collapsible Section */}
+      <div className="mb-6 border-2 border-blue-200 rounded-xl overflow-hidden">
+        <button
+          onClick={() => setShowDataFlow(!showDataFlow)}
+          className="w-full p-4 bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 transition-colors flex items-center justify-between"
+        >
+          <div className="flex items-center gap-3">
+            <Info className="w-5 h-5 text-blue-600" />
+            <span className="font-semibold text-gray-800">
+              How Your Data Values Determine the Pattern
+            </span>
+          </div>
+          {showDataFlow ? (
+            <ChevronUp className="w-5 h-5 text-blue-600" />
+          ) : (
+            <ChevronDown className="w-5 h-5 text-blue-600" />
+          )}
+        </button>
+        
+        {showDataFlow && (
+          <div className="p-6 bg-white space-y-6 text-sm">
+            {/* Overview */}
+            <div>
+              <h3 className="font-bold text-gray-800 mb-2">📊 The Data-to-Pattern Pipeline</h3>
+              <p className="text-gray-600 mb-3">
+                Your values flow through a transformation pipeline: <strong>Raw Numbers → Normalized (0-1) → Column Averages → Pattern Parameters → Visual Pattern</strong>
+              </p>
+            </div>
+
+            {/* Step 1 */}
+            <div className="border-l-4 border-blue-400 pl-4">
+              <h4 className="font-semibold text-gray-800 mb-2">Step 1: Data Normalization</h4>
+              <p className="text-gray-600 mb-2">
+                All your numbers are normalized to a 0-1 range. For example:
+              </p>
+              <code className="block bg-gray-50 p-2 rounded text-xs mb-2">
+                [10, 20, 30, 40] → [0.0, 0.33, 0.67, 1.0]
+              </code>
+              <p className="text-gray-600 text-xs">
+                This ensures different scales (like 10°C vs 100°F) work the same way.
+              </p>
+            </div>
+
+            {/* Step 2 */}
+            <div className="border-l-4 border-green-400 pl-4">
+              <h4 className="font-semibold text-gray-800 mb-2">Step 2: Column Averages</h4>
+              <p className="text-gray-600 mb-2">
+                For each column, we calculate the average of all normalized values:
+              </p>
+              <code className="block bg-gray-50 p-2 rounded text-xs mb-2">
+                Column 1: [0.2, 0.4, 0.6] → Average = 0.4<br/>
+                Column 2: [0.1, 0.3, 0.5] → Average = 0.3
+              </code>
+            </div>
+
+            {/* Step 3 - Fractal Parameters */}
+            <div className="border-l-4 border-purple-400 pl-4">
+              <h4 className="font-semibold text-gray-800 mb-2">Step 3: Mapping to Pattern Parameters</h4>
+              <p className="text-gray-600 mb-3">
+                <strong>For Fractals (Mandelbrot, Julia, etc.):</strong>
+              </p>
+              <div className="space-y-2 text-xs">
+                <div className="bg-purple-50 p-2 rounded">
+                  <strong>Column 1 Average</strong> → <code>zoom</code> (0.5x to 3.0x)<br/>
+                  <span className="text-gray-600">Higher values = more zoomed in</span>
+                </div>
+                <div className="bg-purple-50 p-2 rounded">
+                  <strong>Column 2 Average</strong> → <code>offsetX</code> (-1.5 to 1.5)<br/>
+                  <span className="text-gray-600">Shifts pattern left/right</span>
+                </div>
+                <div className="bg-purple-50 p-2 rounded">
+                  <strong>Column 3 Average</strong> → <code>offsetY</code> (-1.5 to 1.5)<br/>
+                  <span className="text-gray-600">Shifts pattern up/down</span>
+                </div>
+                <div className="bg-purple-50 p-2 rounded">
+                  <strong>Column 4 Average</strong> → <code>maxIterations</code> (100 to 200)<br/>
+                  <span className="text-gray-600">More iterations = more detail</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Step 3 - Geometric */}
+            <div className="border-l-4 border-orange-400 pl-4">
+              <p className="text-gray-600 mb-3">
+                <strong>For Geometric Patterns:</strong>
+              </p>
+              <div className="space-y-2 text-xs">
+                <div className="bg-orange-50 p-2 rounded">
+                  <strong>Column 1</strong> → Angle, frequency, or size<br/>
+                  <span className="text-gray-600">Controls pattern direction and scale</span>
+                </div>
+                <div className="bg-orange-50 p-2 rounded">
+                  <strong>Column 2</strong> → Intensity, amplitude, or contrast<br/>
+                  <span className="text-gray-600">Controls pattern strength</span>
+                </div>
+                <div className="bg-orange-50 p-2 rounded">
+                  <strong>Column 3</strong> → Offset or position<br/>
+                  <span className="text-gray-600">Shifts pattern position</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Step 4 - Colors */}
+            <div className="border-l-4 border-pink-400 pl-4">
+              <h4 className="font-semibold text-gray-800 mb-2">Step 4: Color Generation</h4>
+              <p className="text-gray-600 mb-2">
+                Colors are generated from your data values:
+              </p>
+              <div className="space-y-2 text-xs">
+                <div className="bg-pink-50 p-2 rounded">
+                  <strong>Base Hue</strong> = Column 1 Average × 360°<br/>
+                  <span className="text-gray-600">Determines the main color (0°=red, 120°=green, 240°=blue)</span>
+                </div>
+                <div className="bg-pink-50 p-2 rounded">
+                  <strong>Color Spread</strong> = Based on data variability<br/>
+                  <span className="text-gray-600">More varied data = more diverse colors</span>
+                </div>
+                <div className="bg-pink-50 p-2 rounded">
+                  <strong>Saturation & Lightness</strong> = From column averages<br/>
+                  <span className="text-gray-600">Creates vibrant, contrasting colors</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Examples */}
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg">
+              <h4 className="font-semibold text-gray-800 mb-3">💡 Examples</h4>
+              
+              <div className="mb-3">
+                <p className="font-medium text-gray-700 mb-1">Example 1: Birthday Data</p>
+                <code className="block bg-white p-2 rounded text-xs mb-2">
+                  Input: 3, 15, 2000 (month, day, year)
+                </code>
+                <p className="text-xs text-gray-600">
+                  → Normalized → Column Average: 0.335<br/>
+                  → Zoom: 1.34x, Colors: Green-tinted<br/>
+                  → Result: A specific zoomed view of the Mandelbrot set
+                </p>
+              </div>
+
+              <div>
+                <p className="font-medium text-gray-700 mb-1">Example 2: Exercise Data</p>
+                <code className="block bg-white p-2 rounded text-xs mb-2">
+                  Input: 8523, 4.2, 312 (steps, miles, calories)
+                </code>
+                <p className="text-xs text-gray-600">
+                  → Three columns → Different averages<br/>
+                  → Controls zoom, position, AND colors<br/>
+                  → Result: Unique pattern with specific parameters
+                </p>
+              </div>
+            </div>
+
+            {/* Key Insight */}
+            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
+              <p className="font-semibold text-gray-800 mb-2">✨ Key Insight</p>
+              <p className="text-xs text-gray-700">
+                <strong>Different data values = Different column averages = Different pattern parameters = Different visual output</strong>
+              </p>
+              <p className="text-xs text-gray-600 mt-2">
+                Even small changes in your input will change zoom level, position, colors, and complexity!
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Data Entry */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-3">
@@ -496,19 +567,14 @@ export default function ManualDataEntry({ onDataSubmit }) {
       </div>
 
       {/* Submit Button */}
-      <div className="space-y-2">
-        <button
-          onClick={handleSubmit}
-          disabled={manualData.every(row => !row.value.trim())}
-          className="w-full py-3 bg-blue-500 text-white rounded-xl font-semibold hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
-        >
-          <Download className="w-5 h-5 mr-2" />
-          Generate Pattern Now
-        </button>
-        <p className="text-xs text-gray-500 text-center">
-          ✨ Pattern updates automatically as you type (500ms delay)
-        </p>
-      </div>
+      <button
+        onClick={handleSubmit}
+        disabled={manualData.every(row => !row.value.trim())}
+        className="w-full py-3 bg-blue-500 text-white rounded-xl font-semibold hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+      >
+        <Download className="w-5 h-5 mr-2" />
+        Generate Pattern from Data
+      </button>
     </div>
   )
 }
