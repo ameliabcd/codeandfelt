@@ -17,9 +17,9 @@ export default function Home() {
       
       <div className="gradient-bg">
         <HeroSection />
+        <ImpactsSection />
         <WorkGallery />
         <PatternGrid />
-        <ImpactsSection />
         <NewsletterSignup />
       </div>
     </>

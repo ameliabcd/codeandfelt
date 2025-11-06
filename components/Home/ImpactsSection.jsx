@@ -1,6 +1,6 @@
 'use client'
-import { useState, useEffect } from 'react'
-import { Heart, Calendar, MapPin, DollarSign, Users, Edit2, Plus, X, Save } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Heart, Calendar, MapPin, DollarSign, Users, Edit2, Plus, X, Save, Image as ImageIcon, Upload } from 'lucide-react'
 import { loadImpacts, saveImpact, deleteImpact } from '../../lib/impactStorage'
 
 export default function ImpactsSection() {
@@ -8,13 +8,16 @@ export default function ImpactsSection() {
   const [isEditing, setIsEditing] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const [showAddForm, setShowAddForm] = useState(false)
+  const [isUploadingImage, setIsUploadingImage] = useState(false)
+  const fileInputRef = useRef(null)
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     date: '',
     location: '',
     amount: '',
-    category: 'donation'
+    category: 'donation',
+    image: null
   })
 
   useEffect(() => {
@@ -38,7 +41,8 @@ export default function ImpactsSection() {
       date: impact.date,
       location: impact.location || '',
       amount: impact.amount || '',
-      category: impact.category || 'donation'
+      category: impact.category || 'donation',
+      image: impact.image || null
     })
     setIsEditing(true)
     setShowAddForm(true)
@@ -52,10 +56,54 @@ export default function ImpactsSection() {
       date: new Date().toISOString().split('T')[0],
       location: '',
       amount: '',
-      category: 'donation'
+      category: 'donation',
+      image: null
     })
     setIsEditing(false)
     setShowAddForm(true)
+  }
+
+  const handleImageUpload = async (event) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file')
+      return
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image is too large. Please select an image smaller than 5MB.')
+      return
+    }
+
+    setIsUploadingImage(true)
+
+    try {
+      // Convert to base64 data URL
+      const reader = new FileReader()
+      const imageData = await new Promise((resolve, reject) => {
+        reader.onload = (e) => resolve(e.target.result)
+        reader.onerror = reject
+        reader.readAsDataURL(file)
+      })
+
+      setFormData({ ...formData, image: imageData })
+    } catch (error) {
+      console.error('Error uploading image:', error)
+      alert('Error uploading image. Please try again.')
+    } finally {
+      setIsUploadingImage(false)
+    }
+  }
+
+  const handleRemoveImage = () => {
+    setFormData({ ...formData, image: null })
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
   }
 
   const handleSave = async () => {
@@ -73,6 +121,7 @@ export default function ImpactsSection() {
         location: formData.location,
         amount: formData.amount,
         category: formData.category,
+        image: formData.image,
         createdAt: editingId ? impacts.find(i => i.id === editingId)?.createdAt : new Date().toISOString(),
         updatedAt: new Date().toISOString()
       }
@@ -110,8 +159,12 @@ export default function ImpactsSection() {
       date: '',
       location: '',
       amount: '',
-      category: 'donation'
+      category: 'donation',
+      image: null
     })
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
   }
 
   const formatDate = (dateString) => {
@@ -233,6 +286,53 @@ export default function ImpactsSection() {
                   placeholder="Describe the impact and what was accomplished..."
                 />
               </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Image</label>
+                {formData.image ? (
+                  <div className="relative">
+                    <img
+                      src={formData.image}
+                      alt="Preview"
+                      className="w-full max-w-md h-48 object-cover rounded-lg border-2 border-gray-300 mb-2"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleRemoveImage}
+                      className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2 hover:bg-red-600 transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                      id="impact-image-upload"
+                    />
+                    <label
+                      htmlFor="impact-image-upload"
+                      className="cursor-pointer flex flex-col items-center gap-2"
+                    >
+                      {isUploadingImage ? (
+                        <>
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500"></div>
+                          <span className="text-sm text-gray-600">Uploading...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-8 h-8 text-gray-400" />
+                          <span className="text-sm text-gray-600">Click to upload an image</span>
+                          <span className="text-xs text-gray-500">Max 5MB, JPG/PNG/GIF</span>
+                        </>
+                      )}
+                    </label>
+                  </div>
+                )}
+              </div>
             </div>
             <div className="flex gap-3 mt-4">
               <button
@@ -279,6 +379,17 @@ export default function ImpactsSection() {
                 key={impact.id}
                 className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-100 hover:shadow-xl transition-shadow"
               >
+                {/* Image */}
+                {impact.image && (
+                  <div className="mb-4 rounded-lg overflow-hidden">
+                    <img
+                      src={impact.image}
+                      alt={impact.title}
+                      className="w-full h-48 object-cover"
+                    />
+                  </div>
+                )}
+
                 {/* Category Badge */}
                 <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium mb-4 border ${getCategoryColor(impact.category)}`}>
                   {getCategoryIcon(impact.category)}
