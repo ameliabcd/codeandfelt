@@ -22,12 +22,23 @@ const WorkGallery = () => {
   // Save images to localStorage whenever they change
   useEffect(() => {
     if (images.length > 0) {
-      localStorage.setItem('workGalleryImages', JSON.stringify(images))
+      try {
+        const imagesJson = JSON.stringify(images)
+        localStorage.setItem('workGalleryImages', imagesJson)
+        // Dispatch custom event to update HeroSection
+        window.dispatchEvent(new Event('workGalleryUpdated'))
+      } catch (error) {
+        // Handle localStorage quota exceeded
+        if (error.name === 'QuotaExceededError' || error.code === 22) {
+          console.error('localStorage quota exceeded. Cannot save all images.')
+          alert('Storage limit reached! Please remove some images before uploading more. Each image is stored as base64 which uses significant storage space.')
+        } else {
+          console.error('Error saving images to localStorage:', error)
+        }
+      }
     } else {
       localStorage.removeItem('workGalleryImages')
     }
-    // Dispatch custom event to update HeroSection
-    window.dispatchEvent(new Event('workGalleryUpdated'))
   }, [images])
 
   const handleFileSelect = async (event) => {
@@ -68,7 +79,27 @@ const WorkGallery = () => {
         })
       }
 
-      setImages(prev => [...prev, ...newImages])
+      // Try to add new images
+      const updatedImages = [...images, ...newImages]
+      
+      // Check if we can save to localStorage before updating state
+      try {
+        const testJson = JSON.stringify(updatedImages)
+        // Check if it's too large (rough estimate: 5MB limit)
+        if (testJson.length > 4 * 1024 * 1024) {
+          alert(`Cannot upload ${newImages.length} more image(s). Storage limit reached. Please remove some existing images first. Each image is stored as base64 which uses significant storage space.`)
+          return
+        }
+        setImages(updatedImages)
+      } catch (error) {
+        if (error.name === 'QuotaExceededError' || error.code === 22) {
+          alert('Storage limit reached! Please remove some existing images before uploading more. Each image is stored as base64 which uses significant storage space.')
+        } else {
+          console.error('Error checking storage:', error)
+          alert('Error checking storage space. Please try again.')
+        }
+        return
+      }
       
       // Reset file input
       if (fileInputRef.current) {
