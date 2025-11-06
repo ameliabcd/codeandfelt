@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Keyboard, Plus, Trash2, Download, Shuffle } from 'lucide-react'
 
 // Creative prompts for data entry
@@ -83,6 +83,7 @@ export default function ManualDataEntry({ onDataSubmit }) {
   const [format, setFormat] = useState('single') // 'single', 'rows', 'table'
   const [delimiter, setDelimiter] = useState(',')
   const [currentPrompt, setCurrentPrompt] = useState(dataPrompts[0])
+  const debounceTimerRef = useRef(null)
 
   const handleAddRow = () => {
     setManualData([...manualData, { value: '' }])
@@ -101,7 +102,8 @@ export default function ManualDataEntry({ onDataSubmit }) {
     setManualData(newData)
   }
 
-  const handleSubmit = () => {
+  // Parse and submit data
+  const parseAndSubmit = () => {
     // Parse manual data based on format
     let parsedData = { data: [], headers: [] }
     
@@ -153,8 +155,100 @@ export default function ManualDataEntry({ onDataSubmit }) {
     }
   }
 
+  // Auto-submit when data changes (with debounce)
+  useEffect(() => {
+    // Clear existing timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current)
+    }
+
+    // Check if there's any valid data
+    const hasValidData = manualData.some(row => {
+      if (!row.value.trim()) return false
+      if (format === 'single') {
+        return !isNaN(parseFloat(row.value.trim()))
+      } else {
+        const values = row.value.split(delimiter)
+          .map(v => parseFloat(v.trim()))
+          .filter(v => !isNaN(v))
+        return values.length > 0
+      }
+    })
+
+    // Only auto-submit if there's valid data
+    if (hasValidData) {
+      // Debounce: wait 500ms after user stops typing
+      debounceTimerRef.current = setTimeout(() => {
+        // Parse manual data based on format
+        let parsedData = { data: [], headers: [] }
+        
+        if (format === 'single') {
+          // Single column - each row is a value
+          const numericValues = manualData
+            .map(item => {
+              const val = parseFloat(item.value)
+              return isNaN(val) ? null : val
+            })
+            .filter(val => val !== null)
+          
+          parsedData.data = numericValues.map(val => [val])
+          parsedData.headers = ['value']
+        } else if (format === 'rows') {
+          // Multiple values per row separated by delimiter
+          parsedData.data = manualData
+            .map(item => {
+              const values = item.value.split(delimiter)
+                .map(v => parseFloat(v.trim()))
+                .filter(v => !isNaN(v))
+              return values.length > 0 ? values : null
+            })
+            .filter(row => row !== null)
+          
+          if (parsedData.data.length > 0) {
+            const maxCols = Math.max(...parsedData.data.map(row => row.length))
+            parsedData.headers = Array.from({ length: maxCols }, (_, i) => `column_${i + 1}`)
+          }
+        } else if (format === 'table') {
+          // First row is headers, rest are data
+          if (manualData.length > 1) {
+            const headerRow = manualData[0].value.split(delimiter).map(h => h.trim())
+            parsedData.headers = headerRow
+            
+            parsedData.data = manualData.slice(1)
+              .map(item => {
+                const values = item.value.split(delimiter)
+                  .map(v => parseFloat(v.trim()))
+                  .filter(v => !isNaN(v))
+                return values.length > 0 ? values : null
+              })
+              .filter(row => row !== null)
+          }
+        }
+        
+        if (parsedData.data.length > 0 && onDataSubmit) {
+          onDataSubmit(parsedData)
+        }
+      }, 500)
+    }
+
+    // Cleanup
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current)
+      }
+    }
+  }, [manualData, format, delimiter, onDataSubmit])
+
+  const handleSubmit = () => {
+    parseAndSubmit()
+  }
+
   const handleClear = () => {
     setManualData([{ value: '' }])
+    // Clear any pending submissions
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current)
+    }
   }
 
   const handleLoadExample = () => {
@@ -165,6 +259,7 @@ export default function ManualDataEntry({ onDataSubmit }) {
     ]
     setManualData(exampleData.map(val => ({ value: val })))
     setFormat('single')
+    // Auto-submit will trigger via useEffect
   }
 
   const handleShufflePrompt = () => {
@@ -178,16 +273,10 @@ export default function ManualDataEntry({ onDataSubmit }) {
     setFormat(newPrompt.format)
     
     // Parse example data based on format
-    if (newPrompt.format === 'single') {
-      const exampleValues = newPrompt.example.split('\n')
-      setManualData(exampleValues.map(val => ({ value: val.trim() })))
-    } else if (newPrompt.format === 'rows') {
-      const exampleValues = newPrompt.example.split('\n')
-      setManualData(exampleValues.map(val => ({ value: val.trim() })))
-    } else if (newPrompt.format === 'table') {
-      const exampleValues = newPrompt.example.split('\n')
-      setManualData(exampleValues.map(val => ({ value: val.trim() })))
-    }
+    const exampleValues = newPrompt.example.split('\n')
+    setManualData(exampleValues.map(val => ({ value: val.trim() })))
+    
+    // Auto-submit will trigger via useEffect
   }
 
   return (
@@ -407,14 +496,19 @@ export default function ManualDataEntry({ onDataSubmit }) {
       </div>
 
       {/* Submit Button */}
-      <button
-        onClick={handleSubmit}
-        disabled={manualData.every(row => !row.value.trim())}
-        className="w-full py-3 bg-blue-500 text-white rounded-xl font-semibold hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
-      >
-        <Download className="w-5 h-5 mr-2" />
-        Generate Pattern from Data
-      </button>
+      <div className="space-y-2">
+        <button
+          onClick={handleSubmit}
+          disabled={manualData.every(row => !row.value.trim())}
+          className="w-full py-3 bg-blue-500 text-white rounded-xl font-semibold hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+        >
+          <Download className="w-5 h-5 mr-2" />
+          Generate Pattern Now
+        </button>
+        <p className="text-xs text-gray-500 text-center">
+          ✨ Pattern updates automatically as you type (500ms delay)
+        </p>
+      </div>
     </div>
   )
 }
