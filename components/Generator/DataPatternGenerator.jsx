@@ -1,8 +1,9 @@
 'use client'
 import { useState, useEffect, useMemo } from 'react'
-import { Download, BarChart3, Settings, Grid, Sparkles, Upload, Keyboard } from 'lucide-react'
+import { Download, BarChart3, Settings, Grid, Sparkles, Upload, Keyboard, Heart } from 'lucide-react'
 import FileUpload from './FileUpload'
 import ManualDataEntry from './ManualDataEntry'
+import Animal3DGenerator from './Animal3DGenerator'
 import { parseCSV, parseJSON, parseText, dataToPattern, generateDataStats, dataToFractalParams, generateDataColors } from '../../lib/dataParser'
 import { generateMandelbrot, generateJulia, generateSierpinski, generateKochSnowflake, generateMandelbrotWoolLayers, generatePhiMatrix, fractalToColors } from '../../lib/fractals'
 import { 
@@ -45,6 +46,7 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
   const [dataColors, setDataColors] = useState(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [exportData, setExportData] = useState(null)
+  const [show3DAnimals, setShow3DAnimals] = useState(false)
 
   const patternTypes = [
     // Fractals
@@ -786,6 +788,34 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
               <p className="text-gray-500">Upload data or generate sample to see your fractal pattern</p>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* 3D Animal Generator Section */}
+      {parsedData && (
+        <div className="bg-white rounded-3xl shadow-lg p-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="font-serif text-2xl font-bold text-gray-800 flex items-center gap-3">
+              <Heart className="w-6 h-6 text-pink-500" />
+              3D Felted Animals
+            </h2>
+            <button
+              onClick={() => setShow3DAnimals(!show3DAnimals)}
+              className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                show3DAnimals
+                  ? 'bg-pink-100 text-pink-700'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              {show3DAnimals ? 'Hide' : 'Show'} 3D Animals
+            </button>
+          </div>
+          
+          {show3DAnimals && (
+            <Animal3DGenerator 
+              parsedData={parsedData}
+            />
+          )}
         </div>
       )}
     </div>
