@@ -212,7 +212,7 @@ export default function Animal3DGenerator({ parsedData }) {
                     </svg>
                   </div>
                   <p className="text-xs text-gray-600 text-center mt-4">
-                    This is a side view of your {animalPattern.animalName}. Size and proportions are based on your data values.
+                    This is a front view of your {animalPattern.animalName}. Size and proportions are based on your data values.
                   </p>
                 </div>
               )}
