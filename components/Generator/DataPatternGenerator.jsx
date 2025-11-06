@@ -41,7 +41,7 @@ export default function DataPatternGenerator({ selectedColors, onPatternGenerate
   const [stats, setStats] = useState(null)
   const [patternSize, setPatternSize] = useState(40)
   const [showStats, setShowStats] = useState(false)
-  const [fractalType, setFractalType] = useState('mandelbrot')
+  const [fractalType, setFractalType] = useState('gradient')
   const [fractalParams, setFractalParams] = useState(null)
   const [dataColors, setDataColors] = useState(null)
   const [isGenerating, setIsGenerating] = useState(false)
