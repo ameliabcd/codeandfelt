@@ -15,11 +15,20 @@ export default function Animal3DGenerator({ parsedData }) {
   // Generate colors and fractal params from data
   useEffect(() => {
     if (parsedData && parsedData.data && parsedData.data.length > 0) {
-      const dataColors = generateDataColors(parsedData, 6)
-      setColors(dataColors)
-      
-      const params = dataToFractalParams(parsedData)
-      setFractalParams(params)
+      try {
+        const dataColors = generateDataColors(parsedData, 6)
+        setColors(dataColors)
+        
+        const params = dataToFractalParams(parsedData)
+        setFractalParams(params)
+      } catch (error) {
+        console.error('Error generating colors/params:', error)
+      }
+    } else {
+      // Reset if no data
+      setColors(null)
+      setFractalParams(null)
+      setAnimalPattern(null)
     }
   }, [parsedData])
 
@@ -30,14 +39,29 @@ export default function Animal3DGenerator({ parsedData }) {
       
       setTimeout(() => {
         try {
+          console.log('Generating animal pattern:', { selectedAnimal, parsedData, colors, fractalParams })
           const pattern = generateAnimal3DPattern(selectedAnimal, parsedData, colors, fractalParams)
-          setAnimalPattern(pattern)
+          console.log('Generated pattern:', pattern)
+          
+          if (pattern && pattern.patternPieces && Object.keys(pattern.patternPieces).length > 0) {
+            setAnimalPattern(pattern)
+            console.log('Pattern set successfully')
+          } else {
+            console.error('Pattern generation returned null or invalid pattern:', pattern)
+            setAnimalPattern(null)
+          }
           setIsGenerating(false)
         } catch (error) {
           console.error('Error generating animal pattern:', error)
+          console.error('Error stack:', error.stack)
+          setAnimalPattern(null)
           setIsGenerating(false)
         }
       }, 100)
+    } else {
+      // Reset pattern if dependencies aren't ready
+      setAnimalPattern(null)
+      setIsGenerating(false)
     }
   }, [parsedData, colors, fractalParams, selectedAnimal])
 
@@ -102,6 +126,18 @@ export default function Animal3DGenerator({ parsedData }) {
         </div>
       </div>
 
+      {/* Debug Info (for troubleshooting) */}
+      {parsedData && !animalPattern && !isGenerating && (
+        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded mb-4">
+          <p className="text-sm text-gray-700">
+            <strong>Debug:</strong> Waiting for pattern generation. 
+            {!colors && ' (Colors not ready) '}
+            {!fractalParams && ' (Fractal params not ready) '}
+            {colors && fractalParams && ' (All ready, generating pattern...) '}
+          </p>
+        </div>
+      )}
+
       {/* Pattern Preview */}
       {animalPattern && (
         <div className="bg-white rounded-3xl shadow-lg p-8">
@@ -146,11 +182,52 @@ export default function Animal3DGenerator({ parsedData }) {
                   <p className="mb-2">
                     This {animalPattern.animalName} pattern includes multiple pieces that need to be felted together:
                   </p>
-                  <ul className="list-disc list-inside space-y-1 text-xs">
+                  <ul className="list-disc list-inside space-y-1 text-xs mb-4">
                     {Object.keys(animalPattern.patternPieces).map((part) => (
                       <li key={part} className="capitalize">{part.replace(/_/g, ' ')}</li>
                     ))}
                   </ul>
+                  
+                  {/* Visual Preview of Pattern Pieces */}
+                  <div className="mt-4 p-4 bg-white rounded-lg border-2 border-purple-200">
+                    <p className="text-xs font-semibold text-gray-700 mb-2">Pattern Pieces Preview:</p>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {Object.entries(animalPattern.patternPieces).map(([partName, partData]) => {
+                        if (typeof partData === 'object' && partData !== null) {
+                          // Handle nested objects (e.g., body.front, body.back)
+                          return Object.entries(partData).map(([subPart, piece]) => {
+                            if (piece && piece.points && piece.points.length > 0) {
+                              return (
+                                <div key={`${partName}-${subPart}`} className="border-2 border-gray-300 rounded p-2 bg-white">
+                                  <p className="text-xs font-medium text-gray-700 mb-1 capitalize">
+                                    {partName} {subPart}
+                                  </p>
+                                  <svg 
+                                    width="100" 
+                                    height="100" 
+                                    viewBox={`0 0 ${piece.width || 100} ${piece.height || 100}`}
+                                    className="border border-gray-200 rounded"
+                                  >
+                                    <path
+                                      d={`M ${piece.points[0]?.x || 0} ${piece.points[0]?.y || 0} ${piece.points.slice(1).map(p => `L ${p.x} ${p.y}`).join(' ')} Z`}
+                                      fill={piece.color || '#ccc'}
+                                      stroke="#333"
+                                      strokeWidth="1"
+                                    />
+                                  </svg>
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    {piece.width?.toFixed(1)} × {piece.height?.toFixed(1)} cm
+                                  </p>
+                                </div>
+                              )
+                            }
+                            return null
+                          })
+                        }
+                        return null
+                      })}
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -193,6 +270,23 @@ export default function Animal3DGenerator({ parsedData }) {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Loading State */}
+      {parsedData && isGenerating && !animalPattern && (
+        <div className="bg-white rounded-3xl shadow-lg p-8 text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Generating animal pattern...</p>
+        </div>
+      )}
+
+      {/* Error State */}
+      {parsedData && !isGenerating && !animalPattern && colors && fractalParams && (
+        <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded">
+          <p className="text-sm text-red-700">
+            <strong>Error:</strong> Failed to generate animal pattern. Check console for details.
+          </p>
         </div>
       )}
 
