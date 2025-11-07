@@ -1,10 +1,7 @@
-import { kv } from '@vercel/kv'
+import { redis, useRedis } from '../../../lib/redis'
 import fs from 'fs'
 import path from 'path'
 import os from 'os'
-
-// Check if Vercel KV is available
-const useKV = process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN
 
 // Fallback: Use /tmp on Vercel (writable), /data locally
 const isVercel = process.env.VERCEL === '1'
@@ -16,14 +13,14 @@ const imagesFile = path.join(dataDir, 'images.json')
 // In-memory fallback for Vercel (ephemeral but works)
 let memoryStore = []
 
-// Read images from KV, file, or memory
+// Read images from Redis, file, or memory
 async function readImages() {
-  if (useKV) {
+  if (useRedis && redis) {
     try {
-      const images = await kv.get('images') || []
+      const images = await redis.get('images') || []
       return images
     } catch (error) {
-      console.error('Error reading from KV:', error)
+      console.error('Error reading from Redis:', error)
       return []
     }
   }
@@ -39,14 +36,14 @@ async function readImages() {
   return memoryStore
 }
 
-// Write images to KV, file, or memory
+// Write images to Redis, file, or memory
 async function writeImages(images) {
-  if (useKV) {
+  if (useRedis && redis) {
     try {
-      await kv.set('images', images)
+      await redis.set('images', images)
       return true
     } catch (error) {
-      console.error('Error writing to KV:', error)
+      console.error('Error writing to Redis:', error)
       return false
     }
   }

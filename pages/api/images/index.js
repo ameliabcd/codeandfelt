@@ -1,20 +1,7 @@
-import { kv } from '@vercel/kv'
+import { redis, useRedis } from '../../lib/redis'
 import fs from 'fs'
 import path from 'path'
 import os from 'os'
-
-// Check if Vercel KV is available
-// Vercel KV uses KV_REST_API_URL and KV_REST_API_TOKEN environment variables
-const useKV = !!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN)
-
-// Log KV status (only in development or if KV_URL is set)
-if (process.env.NODE_ENV === 'development' || process.env.KV_REST_API_URL) {
-  console.log('KV Status:', {
-    hasKVURL: !!process.env.KV_REST_API_URL,
-    hasKVToken: !!process.env.KV_REST_API_TOKEN,
-    useKV: useKV
-  })
-}
 
 // Fallback: Use /tmp on Vercel (writable), /data locally
 const isVercel = process.env.VERCEL === '1'
@@ -26,15 +13,15 @@ const imagesFile = path.join(dataDir, 'images.json')
 // In-memory fallback for Vercel (ephemeral but works)
 let memoryStore = []
 
-// Read images from KV, file, or memory
+// Read images from Redis, file, or memory
 async function readImages() {
-  if (useKV) {
+  if (useRedis && redis) {
     try {
-      const images = await kv.get('images')
-      console.log('Read from KV:', images ? `${images.length} images` : 'null')
+      const images = await redis.get('images')
+      console.log('Read from Redis:', images ? `${images.length} images` : 'null')
       return images || []
     } catch (error) {
-      console.error('Error reading from KV:', error)
+      console.error('Error reading from Redis:', error)
       // Fall through to file system fallback
     }
   }
@@ -50,15 +37,15 @@ async function readImages() {
   return memoryStore
 }
 
-// Write images to KV, file, or memory
+// Write images to Redis, file, or memory
 async function writeImages(images) {
-  if (useKV) {
+  if (useRedis && redis) {
     try {
-      await kv.set('images', images)
-      console.log('Written to KV:', `${images.length} images`)
+      await redis.set('images', images)
+      console.log('Written to Redis:', `${images.length} images`)
       return true
     } catch (error) {
-      console.error('Error writing to KV:', error)
+      console.error('Error writing to Redis:', error)
       // Fall through to file system fallback
     }
   }
@@ -83,16 +70,16 @@ export default async function handler(req, res) {
   // Log the incoming request for debugging
   const method = req.method || 'UNKNOWN'
   
-  // Warn if KV is not configured (only log once per deployment)
-  if (!useKV && process.env.VERCEL === '1') {
-    console.warn('⚠️ Vercel KV not configured! Data will not persist. See VERCEL_KV_SETUP.md')
+  // Warn if Redis is not configured (only log once per deployment)
+  if (!useRedis && process.env.VERCEL === '1') {
+    console.warn('⚠️ Upstash Redis not configured! Data will not persist. See VERCEL_KV_SETUP.md')
   }
   
   console.log('API Request received:', {
     method: method,
     url: req.url,
-    usingKV: useKV,
-    storageType: useKV ? 'KV' : (process.env.VERCEL === '1' ? 'ephemeral' : 'file-system')
+    usingRedis: useRedis,
+    storageType: useRedis ? 'Redis' : (process.env.VERCEL === '1' ? 'ephemeral' : 'file-system')
   })
   
   // Handle CORS preflight
@@ -106,7 +93,7 @@ export default async function handler(req, res) {
   if (method === 'GET') {
     try {
       const images = await readImages()
-      console.log(`GET /api/images: Returning ${images.length} images (using ${useKV ? 'KV' : 'fallback'})`)
+      console.log(`GET /api/images: Returning ${images.length} images (using ${useRedis ? 'Redis' : 'fallback'})`)
       res.status(200).json(images)
     } catch (error) {
       console.error('Error reading images:', error)
@@ -123,7 +110,7 @@ export default async function handler(req, res) {
       }
 
       const images = await readImages()
-      console.log(`POST /api/images: Current images: ${images.length} (using ${useKV ? 'KV' : 'fallback'})`)
+      console.log(`POST /api/images: Current images: ${images.length} (using ${useRedis ? 'Redis' : 'fallback'})`)
       
       const newImage = {
         id: req.body.id || `img-${Date.now()}-${Math.random()}`,
@@ -134,7 +121,7 @@ export default async function handler(req, res) {
       
       images.push(newImage)
       const writeSuccess = await writeImages(images)
-      console.log(`POST /api/images: Write ${writeSuccess ? 'successful' : 'failed'} (using ${useKV ? 'KV' : 'fallback'})`)
+      console.log(`POST /api/images: Write ${writeSuccess ? 'successful' : 'failed'} (using ${useRedis ? 'Redis' : 'fallback'})`)
       
       res.status(201).json(newImage)
     } catch (error) {
