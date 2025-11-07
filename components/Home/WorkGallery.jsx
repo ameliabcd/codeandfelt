@@ -71,7 +71,8 @@ const WorkGallery = () => {
           setImages(prev => [...prev, savedImage])
         } catch (error) {
           console.error(`Error saving ${file.name}:`, error)
-          alert(`Failed to upload ${file.name}. Please try again.`)
+          const errorMessage = error.message || 'Unknown error occurred'
+          alert(`Failed to upload ${file.name}: ${errorMessage}`)
         }
       }
 
