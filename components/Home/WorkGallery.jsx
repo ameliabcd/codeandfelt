@@ -211,9 +211,6 @@ const WorkGallery = () => {
             <Upload className="w-5 h-5" />
             {isUploading ? 'Uploading...' : 'Upload Photos'}
           </button>
-          <p className="text-sm text-gray-500 text-center mt-2">
-            You can upload up to 8 images at once (max 10MB per image). Images are automatically compressed and shared with all visitors.
-          </p>
         </div>
 
         {/* Gallery Grid */}
