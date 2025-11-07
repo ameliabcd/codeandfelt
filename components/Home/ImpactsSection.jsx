@@ -153,14 +153,14 @@ export default function ImpactsSection() {
           }
 
           // Convert compressed blob to base64 data URL
-          const reader = new FileReader()
-          const imageData = await new Promise((resolve, reject) => {
-            reader.onload = (e) => resolve(e.target.result)
-            reader.onerror = reject
+        const reader = new FileReader()
+        const imageData = await new Promise((resolve, reject) => {
+          reader.onload = (e) => resolve(e.target.result)
+          reader.onerror = reject
             reader.readAsDataURL(compressedBlob)
-          })
+        })
 
-          newImages.push(imageData)
+        newImages.push(imageData)
         } catch (compressionError) {
           console.error(`Error compressing ${file.name}:`, compressionError)
           alert(`Failed to process ${file.name}. Please try a different image.`)

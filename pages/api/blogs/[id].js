@@ -1,8 +1,12 @@
+import { kv } from '@vercel/kv'
 import fs from 'fs'
 import path from 'path'
 import os from 'os'
 
-// Use /tmp on Vercel (writable), /data locally
+// Check if Vercel KV is available
+const useKV = process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN
+
+// Fallback: Use /tmp on Vercel (writable), /data locally
 const isVercel = process.env.VERCEL === '1'
 const dataDir = isVercel 
   ? path.join(os.tmpdir(), 'math-felt-data')
@@ -12,8 +16,18 @@ const blogsFile = path.join(dataDir, 'blogs.json')
 // In-memory fallback for Vercel (ephemeral but works)
 let memoryStore = []
 
-// Read blogs from file or memory
-function readBlogs() {
+// Read blogs from KV, file, or memory
+async function readBlogs() {
+  if (useKV) {
+    try {
+      const blogs = await kv.get('blogs') || []
+      return blogs
+    } catch (error) {
+      console.error('Error reading from KV:', error)
+      return []
+    }
+  }
+
   try {
     if (fs.existsSync(blogsFile)) {
       const data = fs.readFileSync(blogsFile, 'utf8')
@@ -25,8 +39,18 @@ function readBlogs() {
   return memoryStore
 }
 
-// Write blogs to file or memory
-function writeBlogs(blogs) {
+// Write blogs to KV, file, or memory
+async function writeBlogs(blogs) {
+  if (useKV) {
+    try {
+      await kv.set('blogs', blogs)
+      return true
+    } catch (error) {
+      console.error('Error writing to KV:', error)
+      return false
+    }
+  }
+
   try {
     if (!fs.existsSync(dataDir)) {
       fs.mkdirSync(dataDir, { recursive: true })
@@ -57,7 +81,7 @@ export default async function handler(req, res) {
 
   if (method === 'GET') {
     try {
-      const blogs = readBlogs()
+      const blogs = await readBlogs()
       const blog = blogs.find(b => b.id === id)
       
       if (!blog) {
@@ -71,7 +95,7 @@ export default async function handler(req, res) {
     }
   } else if (method === 'DELETE') {
     try {
-      const blogs = readBlogs()
+      const blogs = await readBlogs()
       
       const filteredBlogs = blogs.filter(blog => blog.id !== id)
       
@@ -79,7 +103,7 @@ export default async function handler(req, res) {
         return res.status(404).json({ error: 'Blog not found' })
       }
       
-      writeBlogs(filteredBlogs)
+      await writeBlogs(filteredBlogs)
       
       res.status(200).json({ success: true })
     } catch (error) {
@@ -91,4 +115,3 @@ export default async function handler(req, res) {
     res.status(405).json({ error: `Method ${method} Not Allowed` })
   }
 }
-

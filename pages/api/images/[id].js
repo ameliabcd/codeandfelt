@@ -1,8 +1,12 @@
+import { kv } from '@vercel/kv'
 import fs from 'fs'
 import path from 'path'
 import os from 'os'
 
-// Use /tmp on Vercel (writable), /data locally
+// Check if Vercel KV is available
+const useKV = process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN
+
+// Fallback: Use /tmp on Vercel (writable), /data locally
 const isVercel = process.env.VERCEL === '1'
 const dataDir = isVercel 
   ? path.join(os.tmpdir(), 'math-felt-data')
@@ -12,8 +16,18 @@ const imagesFile = path.join(dataDir, 'images.json')
 // In-memory fallback for Vercel (ephemeral but works)
 let memoryStore = []
 
-// Read images from file or memory
-function readImages() {
+// Read images from KV, file, or memory
+async function readImages() {
+  if (useKV) {
+    try {
+      const images = await kv.get('images') || []
+      return images
+    } catch (error) {
+      console.error('Error reading from KV:', error)
+      return []
+    }
+  }
+
   try {
     if (fs.existsSync(imagesFile)) {
       const data = fs.readFileSync(imagesFile, 'utf8')
@@ -25,8 +39,18 @@ function readImages() {
   return memoryStore
 }
 
-// Write images to file or memory
-function writeImages(images) {
+// Write images to KV, file, or memory
+async function writeImages(images) {
+  if (useKV) {
+    try {
+      await kv.set('images', images)
+      return true
+    } catch (error) {
+      console.error('Error writing to KV:', error)
+      return false
+    }
+  }
+
   try {
     if (!fs.existsSync(dataDir)) {
       fs.mkdirSync(dataDir, { recursive: true })
@@ -57,7 +81,7 @@ export default async function handler(req, res) {
 
   if (method === 'DELETE') {
     try {
-      const images = readImages()
+      const images = await readImages()
       
       const filteredImages = images.filter(img => img.id !== id)
       
@@ -65,7 +89,7 @@ export default async function handler(req, res) {
         return res.status(404).json({ error: 'Image not found' })
       }
       
-      writeImages(filteredImages)
+      await writeImages(filteredImages)
       
       res.status(200).json({ success: true })
     } catch (error) {
@@ -77,4 +101,3 @@ export default async function handler(req, res) {
     res.status(405).json({ error: `Method ${method} Not Allowed` })
   }
 }
-

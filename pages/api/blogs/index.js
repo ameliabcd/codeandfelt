@@ -1,8 +1,12 @@
+import { kv } from '@vercel/kv'
 import fs from 'fs'
 import path from 'path'
 import os from 'os'
 
-// Use /tmp on Vercel (writable), /data locally
+// Check if Vercel KV is available
+const useKV = process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN
+
+// Fallback: Use /tmp on Vercel (writable), /data locally
 const isVercel = process.env.VERCEL === '1'
 const dataDir = isVercel 
   ? path.join(os.tmpdir(), 'math-felt-data')
@@ -12,24 +16,18 @@ const blogsFile = path.join(dataDir, 'blogs.json')
 // In-memory fallback for Vercel (ephemeral but works)
 let memoryStore = []
 
-// Ensure data directory exists
-function ensureDataDir() {
-  try {
-    if (!fs.existsSync(dataDir)) {
-      fs.mkdirSync(dataDir, { recursive: true })
+// Read blogs from KV, file, or memory
+async function readBlogs() {
+  if (useKV) {
+    try {
+      const blogs = await kv.get('blogs') || []
+      return blogs
+    } catch (error) {
+      console.error('Error reading from KV:', error)
+      return []
     }
-    if (!fs.existsSync(blogsFile)) {
-      fs.writeFileSync(blogsFile, JSON.stringify([]))
-    }
-  } catch (error) {
-    console.warn('Could not create data directory, using memory store:', error.message)
-    return false
   }
-  return true
-}
 
-// Read blogs from file or memory
-function readBlogs() {
   try {
     if (fs.existsSync(blogsFile)) {
       const data = fs.readFileSync(blogsFile, 'utf8')
@@ -41,13 +39,27 @@ function readBlogs() {
   return memoryStore
 }
 
-// Write blogs to file or memory
-function writeBlogs(blogs) {
-  try {
-    if (ensureDataDir()) {
-      fs.writeFileSync(blogsFile, JSON.stringify(blogs, null, 2))
+// Write blogs to KV, file, or memory
+async function writeBlogs(blogs) {
+  if (useKV) {
+    try {
+      await kv.set('blogs', blogs)
       return true
+    } catch (error) {
+      console.error('Error writing to KV:', error)
+      return false
     }
+  }
+
+  try {
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true })
+    }
+    if (!fs.existsSync(blogsFile)) {
+      fs.writeFileSync(blogsFile, JSON.stringify([]))
+    }
+    fs.writeFileSync(blogsFile, JSON.stringify(blogs, null, 2))
+    return true
   } catch (error) {
     console.warn('Could not write blogs file, using memory store:', error.message)
   }
@@ -68,7 +80,7 @@ export default async function handler(req, res) {
 
   if (method === 'GET') {
     try {
-      const blogs = readBlogs()
+      const blogs = await readBlogs()
       // Sort by published date (newest first)
       blogs.sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt))
       res.status(200).json(blogs)
@@ -83,7 +95,7 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Missing required fields: title, content' })
       }
 
-      const blogs = readBlogs()
+      const blogs = await readBlogs()
       
       const newBlog = {
         id: req.body.id || `blog-${Date.now()}-${Math.random()}`,
@@ -95,7 +107,7 @@ export default async function handler(req, res) {
       }
       
       blogs.push(newBlog)
-      writeBlogs(blogs)
+      await writeBlogs(blogs)
       
       res.status(201).json(newBlog)
     } catch (error) {
@@ -107,4 +119,3 @@ export default async function handler(req, res) {
     res.status(405).json({ error: `Method ${method} Not Allowed` })
   }
 }
-

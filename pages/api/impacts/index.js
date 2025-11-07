@@ -1,8 +1,12 @@
+import { kv } from '@vercel/kv'
 import fs from 'fs'
 import path from 'path'
 import os from 'os'
 
-// Use /tmp on Vercel (writable), /data locally
+// Check if Vercel KV is available
+const useKV = process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN
+
+// Fallback: Use /tmp on Vercel (writable), /data locally
 const isVercel = process.env.VERCEL === '1'
 const dataDir = isVercel 
   ? path.join(os.tmpdir(), 'math-felt-data')
@@ -12,8 +16,18 @@ const impactsFile = path.join(dataDir, 'impacts.json')
 // In-memory fallback for Vercel (ephemeral but works)
 let memoryStore = []
 
-// Read impacts from file or memory
-function readImpacts() {
+// Read impacts from KV, file, or memory
+async function readImpacts() {
+  if (useKV) {
+    try {
+      const impacts = await kv.get('impacts') || []
+      return impacts
+    } catch (error) {
+      console.error('Error reading from KV:', error)
+      return []
+    }
+  }
+
   try {
     if (fs.existsSync(impactsFile)) {
       const data = fs.readFileSync(impactsFile, 'utf8')
@@ -25,8 +39,18 @@ function readImpacts() {
   return memoryStore
 }
 
-// Write impacts to file or memory
-function writeImpacts(impacts) {
+// Write impacts to KV, file, or memory
+async function writeImpacts(impacts) {
+  if (useKV) {
+    try {
+      await kv.set('impacts', impacts)
+      return true
+    } catch (error) {
+      console.error('Error writing to KV:', error)
+      return false
+    }
+  }
+
   try {
     if (!fs.existsSync(dataDir)) {
       fs.mkdirSync(dataDir, { recursive: true })
@@ -56,7 +80,7 @@ export default async function handler(req, res) {
 
   if (method === 'GET') {
     try {
-      const impacts = readImpacts()
+      const impacts = await readImpacts()
       // Sort by date (newest first)
       impacts.sort((a, b) => {
         const dateA = a.date ? new Date(a.date) : new Date(a.createdAt || 0)
@@ -75,7 +99,7 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Missing required fields: title, description' })
       }
 
-      const impacts = readImpacts()
+      const impacts = await readImpacts()
       
       const newImpact = {
         id: req.body.id || `impact-${Date.now()}-${Math.random()}`,
@@ -98,7 +122,7 @@ export default async function handler(req, res) {
         impacts.push(newImpact)
       }
       
-      writeImpacts(impacts)
+      await writeImpacts(impacts)
       
       res.status(201).json(newImpact)
     } catch (error) {
@@ -110,4 +134,3 @@ export default async function handler(req, res) {
     res.status(405).json({ error: `Method ${method} Not Allowed` })
   }
 }
-

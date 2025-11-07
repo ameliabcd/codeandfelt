@@ -1,8 +1,12 @@
+import { kv } from '@vercel/kv'
 import fs from 'fs'
 import path from 'path'
 import os from 'os'
 
-// Use /tmp on Vercel (writable), /data locally
+// Check if Vercel KV is available
+const useKV = process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN
+
+// Fallback: Use /tmp on Vercel (writable), /data locally
 const isVercel = process.env.VERCEL === '1'
 const dataDir = isVercel 
   ? path.join(os.tmpdir(), 'math-felt-data')
@@ -12,24 +16,18 @@ const imagesFile = path.join(dataDir, 'images.json')
 // In-memory fallback for Vercel (ephemeral but works)
 let memoryStore = []
 
-// Ensure data directory exists
-function ensureDataDir() {
-  try {
-    if (!fs.existsSync(dataDir)) {
-      fs.mkdirSync(dataDir, { recursive: true })
+// Read images from KV, file, or memory
+async function readImages() {
+  if (useKV) {
+    try {
+      const images = await kv.get('images') || []
+      return images
+    } catch (error) {
+      console.error('Error reading from KV:', error)
+      return []
     }
-    if (!fs.existsSync(imagesFile)) {
-      fs.writeFileSync(imagesFile, JSON.stringify([]))
-    }
-  } catch (error) {
-    console.warn('Could not create data directory, using memory store:', error.message)
-    return false
   }
-  return true
-}
 
-// Read images from file or memory
-function readImages() {
   try {
     if (fs.existsSync(imagesFile)) {
       const data = fs.readFileSync(imagesFile, 'utf8')
@@ -41,13 +39,27 @@ function readImages() {
   return memoryStore
 }
 
-// Write images to file or memory
-function writeImages(images) {
-  try {
-    if (ensureDataDir()) {
-      fs.writeFileSync(imagesFile, JSON.stringify(images, null, 2))
+// Write images to KV, file, or memory
+async function writeImages(images) {
+  if (useKV) {
+    try {
+      await kv.set('images', images)
       return true
+    } catch (error) {
+      console.error('Error writing to KV:', error)
+      return false
     }
+  }
+
+  try {
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true })
+    }
+    if (!fs.existsSync(imagesFile)) {
+      fs.writeFileSync(imagesFile, JSON.stringify([]))
+    }
+    fs.writeFileSync(imagesFile, JSON.stringify(images, null, 2))
+    return true
   } catch (error) {
     console.warn('Could not write images file, using memory store:', error.message)
   }
@@ -61,8 +73,7 @@ export default async function handler(req, res) {
   console.log('API Request received:', {
     method: method,
     url: req.url,
-    bodyType: typeof req.body,
-    bodyKeys: req.body ? Object.keys(req.body) : 'no body'
+    usingKV: useKV
   })
   
   // Handle CORS preflight
@@ -75,7 +86,7 @@ export default async function handler(req, res) {
 
   if (method === 'GET') {
     try {
-      const images = readImages()
+      const images = await readImages()
       res.status(200).json(images)
     } catch (error) {
       console.error('Error reading images:', error)
@@ -91,7 +102,7 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Missing required fields: url', received: req.body })
       }
 
-      const images = readImages()
+      const images = await readImages()
       
       const newImage = {
         id: req.body.id || `img-${Date.now()}-${Math.random()}`,
@@ -101,7 +112,7 @@ export default async function handler(req, res) {
       }
       
       images.push(newImage)
-      writeImages(images)
+      await writeImages(images)
       
       res.status(201).json(newImage)
     } catch (error) {
@@ -112,21 +123,14 @@ export default async function handler(req, res) {
     console.error('Unsupported method received:', {
       originalMethod: req.method,
       method: method,
-      url: req.url,
-      allHeaders: Object.keys(req.headers || {})
+      url: req.url
     })
     res.setHeader('Allow', ['GET', 'POST', 'OPTIONS'])
     res.status(405).json({ 
       error: `Method ${method || req.method || 'UNKNOWN'} Not Allowed`,
       receivedMethod: req.method,
       method: method,
-      allowedMethods: ['GET', 'POST', 'OPTIONS'],
-      debug: {
-        reqMethod: req.method,
-        methodVar: method,
-        typeOfMethod: typeof method
-      }
+      allowedMethods: ['GET', 'POST', 'OPTIONS']
     })
   }
 }
-
