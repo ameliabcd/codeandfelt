@@ -1,17 +1,58 @@
 import fs from 'fs'
 import path from 'path'
+import os from 'os'
 
-const dataDir = path.join(process.cwd(), 'data')
+// Use /tmp on Vercel (writable), /data locally
+const isVercel = process.env.VERCEL === '1'
+const dataDir = isVercel 
+  ? path.join(os.tmpdir(), 'math-felt-data')
+  : path.join(process.cwd(), 'data')
 const imagesFile = path.join(dataDir, 'images.json')
 
+// In-memory fallback for Vercel (ephemeral but works)
+let memoryStore = []
+
 // Ensure data directory exists
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true })
+function ensureDataDir() {
+  try {
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true })
+    }
+    if (!fs.existsSync(imagesFile)) {
+      fs.writeFileSync(imagesFile, JSON.stringify([]))
+    }
+  } catch (error) {
+    console.warn('Could not create data directory, using memory store:', error.message)
+    return false
+  }
+  return true
 }
 
-// Initialize images.json if it doesn't exist
-if (!fs.existsSync(imagesFile)) {
-  fs.writeFileSync(imagesFile, JSON.stringify([]))
+// Read images from file or memory
+function readImages() {
+  try {
+    if (fs.existsSync(imagesFile)) {
+      const data = fs.readFileSync(imagesFile, 'utf8')
+      return JSON.parse(data)
+    }
+  } catch (error) {
+    console.warn('Could not read images file, using memory store:', error.message)
+  }
+  return memoryStore
+}
+
+// Write images to file or memory
+function writeImages(images) {
+  try {
+    if (ensureDataDir()) {
+      fs.writeFileSync(imagesFile, JSON.stringify(images, null, 2))
+      return true
+    }
+  } catch (error) {
+    console.warn('Could not write images file, using memory store:', error.message)
+  }
+  memoryStore = images
+  return false
 }
 
 export default async function handler(req, res) {
@@ -32,23 +73,9 @@ export default async function handler(req, res) {
     return res.status(200).end()
   }
 
-  // Ensure data directory and file exist
-  try {
-    if (!fs.existsSync(dataDir)) {
-      fs.mkdirSync(dataDir, { recursive: true })
-    }
-    if (!fs.existsSync(imagesFile)) {
-      fs.writeFileSync(imagesFile, JSON.stringify([]))
-    }
-  } catch (error) {
-    console.error('Error initializing data directory:', error)
-    return res.status(500).json({ error: 'Failed to initialize storage' })
-  }
-
   if (method === 'GET') {
     try {
-      const data = fs.readFileSync(imagesFile, 'utf8')
-      const images = JSON.parse(data)
+      const images = readImages()
       res.status(200).json(images)
     } catch (error) {
       console.error('Error reading images:', error)
@@ -64,8 +91,7 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Missing required fields: url', received: req.body })
       }
 
-      const data = fs.readFileSync(imagesFile, 'utf8')
-      const images = JSON.parse(data)
+      const images = readImages()
       
       const newImage = {
         id: req.body.id || `img-${Date.now()}-${Math.random()}`,
@@ -75,7 +101,7 @@ export default async function handler(req, res) {
       }
       
       images.push(newImage)
-      fs.writeFileSync(imagesFile, JSON.stringify(images, null, 2))
+      writeImages(images)
       
       res.status(201).json(newImage)
     } catch (error) {
