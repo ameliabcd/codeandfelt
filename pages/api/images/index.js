@@ -1,4 +1,4 @@
-import { redis, useRedis } from '../../lib/redis'
+import { redis, useRedis } from '../../../lib/redis'
 import fs from 'fs'
 import path from 'path'
 import os from 'os'
