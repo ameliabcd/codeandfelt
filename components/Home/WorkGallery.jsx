@@ -1,7 +1,7 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
 import { Upload, X, Image as ImageIcon } from 'lucide-react'
-import { saveImages, loadImages, removeImage as removeImageFromDB, clearImages } from '../../lib/imageStorage'
+import { saveImage, loadImages, removeImage as removeImageFromDB } from '../../lib/imageStorage'
 
 const WorkGallery = () => {
   const [images, setImages] = useState([])
@@ -9,59 +9,23 @@ const WorkGallery = () => {
   const [isLoading, setIsLoading] = useState(true)
   const fileInputRef = useRef(null)
 
-  // Load images from IndexedDB on mount
+  // Load images from server on mount
   useEffect(() => {
-    const loadImagesFromStorage = async () => {
+    const loadImagesFromServer = async () => {
       try {
         setIsLoading(true)
         const savedImages = await loadImages()
         setImages(savedImages || [])
+        // Dispatch custom event to update HeroSection
+        window.dispatchEvent(new Event('workGalleryUpdated'))
       } catch (error) {
         console.error('Error loading images:', error)
-        // Fallback to localStorage for migration
-        try {
-          const localStorageImages = localStorage.getItem('workGalleryImages')
-          if (localStorageImages) {
-            const parsed = JSON.parse(localStorageImages)
-            setImages(parsed)
-            // Migrate to IndexedDB
-            if (parsed.length > 0) {
-              await saveImages(parsed)
-              localStorage.removeItem('workGalleryImages')
-            }
-          }
-        } catch (e) {
-          console.error('Error migrating from localStorage:', e)
-        }
       } finally {
         setIsLoading(false)
       }
     }
-    loadImagesFromStorage()
+    loadImagesFromServer()
   }, [])
-
-  // Save images to IndexedDB whenever they change
-  useEffect(() => {
-    if (!isLoading) {
-      const saveImagesToStorage = async () => {
-        try {
-          if (images.length > 0) {
-            await saveImages(images)
-          } else {
-            await clearImages()
-          }
-          // Dispatch custom event to update HeroSection
-          window.dispatchEvent(new Event('workGalleryUpdated'))
-        } catch (error) {
-          console.error('Error saving images:', error)
-          if (error.name === 'QuotaExceededError' || error.code === 22) {
-            alert('Storage limit reached! Please remove some images before uploading more.')
-          }
-        }
-      }
-      saveImagesToStorage()
-    }
-  }, [images, isLoading])
 
   const handleFileSelect = async (event) => {
     const files = Array.from(event.target.files)
@@ -70,7 +34,7 @@ const WorkGallery = () => {
     setIsUploading(true)
 
     try {
-      const newImages = []
+      const uploadedImages = []
       
       for (const file of files) {
         // Validate file type
@@ -93,16 +57,28 @@ const WorkGallery = () => {
           reader.readAsDataURL(file)
         })
 
-        newImages.push({
-          id: Date.now() + Math.random(),
+        const imageToSave = {
+          id: `img-${Date.now()}-${Math.random()}`,
           url: imageData,
           name: file.name,
           uploadedAt: new Date().toISOString()
-        })
+        }
+
+        // Save to server
+        try {
+          const savedImage = await saveImage(imageToSave)
+          uploadedImages.push(savedImage)
+          setImages(prev => [...prev, savedImage])
+        } catch (error) {
+          console.error(`Error saving ${file.name}:`, error)
+          alert(`Failed to upload ${file.name}. Please try again.`)
+        }
       }
 
-      // Add new images (IndexedDB can handle much more than localStorage)
-      setImages(prev => [...prev, ...newImages])
+      // Dispatch custom event to update HeroSection
+      if (uploadedImages.length > 0) {
+        window.dispatchEvent(new Event('workGalleryUpdated'))
+      }
       
       // Reset file input
       if (fileInputRef.current) {
@@ -120,10 +96,11 @@ const WorkGallery = () => {
     try {
       await removeImageFromDB(imageId)
       setImages(prev => prev.filter(img => img.id !== imageId))
+      // Dispatch custom event to update HeroSection
+      window.dispatchEvent(new Event('workGalleryUpdated'))
     } catch (error) {
       console.error('Error removing image:', error)
-      // Still update UI even if DB removal fails
-      setImages(prev => prev.filter(img => img.id !== imageId))
+      alert('Failed to delete image. Please try again.')
     }
   }
 
@@ -163,7 +140,7 @@ const WorkGallery = () => {
             {isUploading ? 'Uploading...' : 'Upload Photos'}
           </button>
           <p className="text-sm text-gray-500 text-center mt-2">
-            You can upload multiple images at once (max 5MB per image). Images are stored in IndexedDB for larger capacity.
+            You can upload multiple images at once (max 5MB per image). Images are shared with all visitors.
           </p>
         </div>
 

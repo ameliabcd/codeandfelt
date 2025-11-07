@@ -8,7 +8,7 @@ const HeroSection = () => {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const sectionRef = useRef(null)
 
-  // Load images from IndexedDB for background
+  // Load images from server for background
   const loadBackgroundImages = async () => {
     try {
       const { loadImages } = await import('../../lib/imageStorage')
@@ -16,18 +16,7 @@ const HeroSection = () => {
       setBackgroundImages(images.slice(0, 8)) // Show up to 8 images
     } catch (error) {
       console.error('Error loading background images:', error)
-      // Fallback to localStorage for migration
-      try {
-        const savedImages = localStorage.getItem('workGalleryImages')
-        if (savedImages) {
-          const images = JSON.parse(savedImages)
-          setBackgroundImages(images.slice(0, 8))
-        } else {
-          setBackgroundImages([])
-        }
-      } catch (e) {
-        setBackgroundImages([])
-      }
+      setBackgroundImages([])
     }
   }
 
