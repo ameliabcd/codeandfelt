@@ -4,7 +4,17 @@ import path from 'path'
 import os from 'os'
 
 // Check if Vercel KV is available
-const useKV = process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN
+// Vercel KV uses KV_REST_API_URL and KV_REST_API_TOKEN environment variables
+const useKV = !!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN)
+
+// Log KV status (only in development or if KV_URL is set)
+if (process.env.NODE_ENV === 'development' || process.env.KV_REST_API_URL) {
+  console.log('KV Status:', {
+    hasKVURL: !!process.env.KV_REST_API_URL,
+    hasKVToken: !!process.env.KV_REST_API_TOKEN,
+    useKV: useKV
+  })
+}
 
 // Fallback: Use /tmp on Vercel (writable), /data locally
 const isVercel = process.env.VERCEL === '1'
@@ -20,11 +30,12 @@ let memoryStore = []
 async function readImages() {
   if (useKV) {
     try {
-      const images = await kv.get('images') || []
-      return images
+      const images = await kv.get('images')
+      console.log('Read from KV:', images ? `${images.length} images` : 'null')
+      return images || []
     } catch (error) {
       console.error('Error reading from KV:', error)
-      return []
+      // Fall through to file system fallback
     }
   }
 
@@ -44,10 +55,11 @@ async function writeImages(images) {
   if (useKV) {
     try {
       await kv.set('images', images)
+      console.log('Written to KV:', `${images.length} images`)
       return true
     } catch (error) {
       console.error('Error writing to KV:', error)
-      return false
+      // Fall through to file system fallback
     }
   }
 
@@ -87,6 +99,7 @@ export default async function handler(req, res) {
   if (method === 'GET') {
     try {
       const images = await readImages()
+      console.log(`GET /api/images: Returning ${images.length} images (using ${useKV ? 'KV' : 'fallback'})`)
       res.status(200).json(images)
     } catch (error) {
       console.error('Error reading images:', error)
@@ -103,6 +116,7 @@ export default async function handler(req, res) {
       }
 
       const images = await readImages()
+      console.log(`POST /api/images: Current images: ${images.length} (using ${useKV ? 'KV' : 'fallback'})`)
       
       const newImage = {
         id: req.body.id || `img-${Date.now()}-${Math.random()}`,
@@ -112,7 +126,8 @@ export default async function handler(req, res) {
       }
       
       images.push(newImage)
-      await writeImages(images)
+      const writeSuccess = await writeImages(images)
+      console.log(`POST /api/images: Write ${writeSuccess ? 'successful' : 'failed'} (using ${useKV ? 'KV' : 'fallback'})`)
       
       res.status(201).json(newImage)
     } catch (error) {
