@@ -82,10 +82,17 @@ async function writeImages(images) {
 export default async function handler(req, res) {
   // Log the incoming request for debugging
   const method = req.method || 'UNKNOWN'
+  
+  // Warn if KV is not configured (only log once per deployment)
+  if (!useKV && process.env.VERCEL === '1') {
+    console.warn('⚠️ Vercel KV not configured! Data will not persist. See VERCEL_KV_SETUP.md')
+  }
+  
   console.log('API Request received:', {
     method: method,
     url: req.url,
-    usingKV: useKV
+    usingKV: useKV,
+    storageType: useKV ? 'KV' : (process.env.VERCEL === '1' ? 'ephemeral' : 'file-system')
   })
   
   // Handle CORS preflight
