@@ -74,7 +74,7 @@ const HeroSection = () => {
 
       <div className="max-w-7xl mx-auto relative z-10 py-20 px-4 sm:px-6 lg:px-8 h-full flex items-center justify-center">
         <div className={`text-center transition-all duration-500 w-full flex flex-col items-center justify-center ${
-          isCollapsed ? 'mb-4' : 'mb-16 mt-16'
+          isCollapsed ? 'mb-4' : 'mb-16 mt-32'
         }`}>
           <h1 className={`font-serif font-bold text-gray-800 leading-tight transition-all duration-500 ${
             isCollapsed 
