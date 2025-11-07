@@ -96,29 +96,29 @@ export default function BlogEditor({ onPublish }) {
         }
 
         // Convert compressed blob to base64 data URL
-        const reader = new FileReader()
-        const imageData = await new Promise((resolve, reject) => {
-          reader.onload = (e) => resolve(e.target.result)
-          reader.onerror = reject
+      const reader = new FileReader()
+      const imageData = await new Promise((resolve, reject) => {
+        reader.onload = (e) => resolve(e.target.result)
+        reader.onerror = reject
           reader.readAsDataURL(compressedBlob)
-        })
+      })
 
-        const imageId = `img-${Date.now()}-${Math.random()}`
-        setImages(prev => [...prev, { id: imageId, url: imageData, name: file.name }])
-        
-        // Insert image placeholder in content
-        const imageMarkdown = `\n![${file.name}](${imageId})\n`
-        const textarea = contentTextareaRef.current
-        if (textarea) {
-          const start = textarea.selectionStart
-          const end = textarea.selectionEnd
-          const newContent = content.substring(0, start) + imageMarkdown + content.substring(end)
-          setContent(newContent)
-          // Set cursor after inserted image
-          setTimeout(() => {
-            textarea.focus()
-            textarea.setSelectionRange(start + imageMarkdown.length, start + imageMarkdown.length)
-          }, 0)
+      const imageId = `img-${Date.now()}-${Math.random()}`
+      setImages(prev => [...prev, { id: imageId, url: imageData, name: file.name }])
+      
+      // Insert image placeholder in content
+      const imageMarkdown = `\n![${file.name}](${imageId})\n`
+      const textarea = contentTextareaRef.current
+      if (textarea) {
+        const start = textarea.selectionStart
+        const end = textarea.selectionEnd
+        const newContent = content.substring(0, start) + imageMarkdown + content.substring(end)
+        setContent(newContent)
+        // Set cursor after inserted image
+        setTimeout(() => {
+          textarea.focus()
+          textarea.setSelectionRange(start + imageMarkdown.length, start + imageMarkdown.length)
+        }, 0)
         }
       } catch (compressionError) {
         console.error(`Error compressing ${file.name}:`, compressionError)

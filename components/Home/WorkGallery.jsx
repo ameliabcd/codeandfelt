@@ -117,19 +117,19 @@ const WorkGallery = () => {
           }
 
           // Convert compressed blob to base64 data URL
-          const reader = new FileReader()
-          const imageData = await new Promise((resolve, reject) => {
-            reader.onload = (e) => resolve(e.target.result)
-            reader.onerror = reject
+        const reader = new FileReader()
+        const imageData = await new Promise((resolve, reject) => {
+          reader.onload = (e) => resolve(e.target.result)
+          reader.onerror = reject
             reader.readAsDataURL(compressedBlob)
-          })
+        })
 
           const imageToSave = {
             id: `img-${Date.now()}-${Math.random()}`,
-            url: imageData,
-            name: file.name,
-            uploadedAt: new Date().toISOString()
-          }
+          url: imageData,
+          name: file.name,
+          uploadedAt: new Date().toISOString()
+      }
 
           // Save to server
           try {

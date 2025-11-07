@@ -16,7 +16,7 @@ const HeroSection = () => {
       setBackgroundImages(images.slice(0, 8)) // Show up to 8 images
     } catch (error) {
       console.error('Error loading background images:', error)
-      setBackgroundImages([])
+        setBackgroundImages([])
     }
   }
 

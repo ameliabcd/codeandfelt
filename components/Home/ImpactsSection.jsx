@@ -3,6 +3,57 @@ import { useState, useEffect, useRef } from 'react'
 import { Heart, Calendar, MapPin, DollarSign, Users, Edit2, Plus, X, Save, Image as ImageIcon, Upload } from 'lucide-react'
 import { loadImpacts, saveImpact, deleteImpact } from '../../lib/impactStorage'
 
+// Compress and resize image
+const compressImage = (file, maxWidth = 1920, maxHeight = 1920, quality = 0.8) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const img = new Image()
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        let width = img.width
+        let height = img.height
+
+        // Calculate new dimensions
+        if (width > height) {
+          if (width > maxWidth) {
+            height = (height * maxWidth) / width
+            width = maxWidth
+          }
+        } else {
+          if (height > maxHeight) {
+            width = (width * maxHeight) / height
+            height = maxHeight
+          }
+        }
+
+        canvas.width = width
+        canvas.height = height
+
+        // Draw and compress
+        const ctx = canvas.getContext('2d')
+        ctx.drawImage(img, 0, 0, width, height)
+
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              resolve(blob)
+            } else {
+              reject(new Error('Failed to compress image'))
+            }
+          },
+          'image/jpeg',
+          quality
+        )
+      }
+      img.onerror = reject
+      img.src = e.target.result
+    }
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+}
+
 export default function ImpactsSection() {
   const [impacts, setImpacts] = useState([])
   const [isEditing, setIsEditing] = useState(false)
@@ -79,21 +130,41 @@ export default function ImpactsSection() {
           continue
         }
 
-        // Validate file size (max 5MB)
-        if (file.size > 5 * 1024 * 1024) {
-          alert(`${file.name} is too large. Please select images smaller than 5MB. Skipping.`)
+        // Validate file size (max 10MB before compression)
+        if (file.size > 10 * 1024 * 1024) {
+          alert(`${file.name} is too large. Please select images smaller than 10MB. Skipping.`)
           continue
         }
 
-        // Convert to base64 data URL
-        const reader = new FileReader()
-        const imageData = await new Promise((resolve, reject) => {
-          reader.onload = (e) => resolve(e.target.result)
-          reader.onerror = reject
-          reader.readAsDataURL(file)
-        })
+        try {
+          // Compress image before uploading (target ~1MB to stay well under Vercel's 4.5MB limit)
+          let compressedBlob = await compressImage(file, 1600, 1600, 0.7)
+          
+          // Progressive compression if still too large
+          if (compressedBlob.size > 1.5 * 1024 * 1024) {
+            compressedBlob = await compressImage(file, 1280, 1280, 0.6)
+          }
+          if (compressedBlob.size > 1.5 * 1024 * 1024) {
+            compressedBlob = await compressImage(file, 1024, 1024, 0.5)
+          }
+          if (compressedBlob.size > 1.5 * 1024 * 1024) {
+            alert(`${file.name} is still too large after compression (${(compressedBlob.size / 1024 / 1024).toFixed(2)}MB). Please use a smaller image.`)
+            continue
+          }
 
-        newImages.push(imageData)
+          // Convert compressed blob to base64 data URL
+          const reader = new FileReader()
+          const imageData = await new Promise((resolve, reject) => {
+            reader.onload = (e) => resolve(e.target.result)
+            reader.onerror = reject
+            reader.readAsDataURL(compressedBlob)
+          })
+
+          newImages.push(imageData)
+        } catch (compressionError) {
+          console.error(`Error compressing ${file.name}:`, compressionError)
+          alert(`Failed to process ${file.name}. Please try a different image.`)
+        }
       }
 
       setFormData({ ...formData, images: [...formData.images, ...newImages] })
