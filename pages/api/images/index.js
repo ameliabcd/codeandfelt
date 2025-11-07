@@ -15,6 +15,26 @@ if (!fs.existsSync(imagesFile)) {
 }
 
 export default function handler(req, res) {
+  // Log the incoming request for debugging
+  console.log('API Request received:', {
+    method: req.method,
+    url: req.url,
+    headers: req.headers,
+    bodyType: typeof req.body,
+    bodyKeys: req.body ? Object.keys(req.body) : 'no body'
+  })
+  
+  // Handle CORS preflight
+  if (req.method === 'OPTIONS') {
+    res.setHeader('Access-Control-Allow-Origin', '*')
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS')
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+    return res.status(200).end()
+  }
+  
+  // Normalize method (sometimes it might come in lowercase)
+  const method = (req.method || '').toUpperCase()
+
   // Ensure data directory and file exist
   try {
     if (!fs.existsSync(dataDir)) {
@@ -28,7 +48,7 @@ export default function handler(req, res) {
     return res.status(500).json({ error: 'Failed to initialize storage' })
   }
 
-  if (req.method === 'GET') {
+  if (method === 'GET') {
     try {
       const data = fs.readFileSync(imagesFile, 'utf8')
       const images = JSON.parse(data)
@@ -37,11 +57,14 @@ export default function handler(req, res) {
       console.error('Error reading images:', error)
       res.status(500).json({ error: 'Failed to load images', details: error.message })
     }
-  } else if (req.method === 'POST') {
+  } else if (method === 'POST') {
     try {
+      console.log('POST request body:', JSON.stringify(req.body).substring(0, 200))
+      
       // Validate request body
       if (!req.body || !req.body.url) {
-        return res.status(400).json({ error: 'Missing required fields: url' })
+        console.error('Missing required fields. Body:', req.body)
+        return res.status(400).json({ error: 'Missing required fields: url', received: req.body })
       }
 
       const data = fs.readFileSync(imagesFile, 'utf8')
@@ -63,8 +86,18 @@ export default function handler(req, res) {
       res.status(500).json({ error: 'Failed to save image', details: error.message })
     }
   } else {
-    res.setHeader('Allow', ['GET', 'POST'])
-    res.status(405).end(`Method ${req.method} Not Allowed`)
+    console.error('Unsupported method received:', {
+      originalMethod: req.method,
+      normalizedMethod: method,
+      url: req.url
+    })
+    res.setHeader('Allow', ['GET', 'POST', 'OPTIONS'])
+    res.status(405).json({ 
+      error: `Method ${method || req.method || 'UNKNOWN'} Not Allowed`,
+      receivedMethod: req.method,
+      normalizedMethod: method,
+      allowedMethods: ['GET', 'POST', 'OPTIONS']
+    })
   }
 }
 
