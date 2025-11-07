@@ -3,6 +3,57 @@ import { useState, useRef } from 'react'
 import { Upload, X, Save, Image as ImageIcon, Bold, Italic, List, Type, Plus } from 'lucide-react'
 import { saveBlog, loadBlogs } from '../../lib/blogStorage'
 
+// Compress and resize image
+const compressImage = (file, maxWidth = 1920, maxHeight = 1920, quality = 0.8) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const img = new Image()
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        let width = img.width
+        let height = img.height
+
+        // Calculate new dimensions
+        if (width > height) {
+          if (width > maxWidth) {
+            height = (height * maxWidth) / width
+            width = maxWidth
+          }
+        } else {
+          if (height > maxHeight) {
+            width = (width * maxHeight) / height
+            height = maxHeight
+          }
+        }
+
+        canvas.width = width
+        canvas.height = height
+
+        // Draw and compress
+        const ctx = canvas.getContext('2d')
+        ctx.drawImage(img, 0, 0, width, height)
+
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              resolve(blob)
+            } else {
+              reject(new Error('Failed to compress image'))
+            }
+          },
+          'image/jpeg',
+          quality
+        )
+      }
+      img.onerror = reject
+      img.src = e.target.result
+    }
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+}
+
 export default function BlogEditor({ onPublish }) {
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
@@ -22,34 +73,56 @@ export default function BlogEditor({ onPublish }) {
         continue
       }
 
-      if (file.size > 5 * 1024 * 1024) {
-        alert(`${file.name} is too large. Maximum size is 5MB.`)
+      // Validate file size (max 10MB before compression)
+      if (file.size > 10 * 1024 * 1024) {
+        alert(`${file.name} is too large. Please select images smaller than 10MB.`)
         continue
       }
 
-      const reader = new FileReader()
-      const imageData = await new Promise((resolve, reject) => {
-        reader.onload = (e) => resolve(e.target.result)
-        reader.onerror = reject
-        reader.readAsDataURL(file)
-      })
+      try {
+        // Compress image before uploading (target ~1MB to stay well under Vercel's 4.5MB limit)
+        let compressedBlob = await compressImage(file, 1600, 1600, 0.7)
+        
+        // Progressive compression if still too large
+        if (compressedBlob.size > 1.5 * 1024 * 1024) {
+          compressedBlob = await compressImage(file, 1280, 1280, 0.6)
+        }
+        if (compressedBlob.size > 1.5 * 1024 * 1024) {
+          compressedBlob = await compressImage(file, 1024, 1024, 0.5)
+        }
+        if (compressedBlob.size > 1.5 * 1024 * 1024) {
+          alert(`${file.name} is still too large after compression (${(compressedBlob.size / 1024 / 1024).toFixed(2)}MB). Please use a smaller image.`)
+          continue
+        }
 
-      const imageId = `img-${Date.now()}-${Math.random()}`
-      setImages(prev => [...prev, { id: imageId, url: imageData, name: file.name }])
-      
-      // Insert image placeholder in content
-      const imageMarkdown = `\n![${file.name}](${imageId})\n`
-      const textarea = contentTextareaRef.current
-      if (textarea) {
-        const start = textarea.selectionStart
-        const end = textarea.selectionEnd
-        const newContent = content.substring(0, start) + imageMarkdown + content.substring(end)
-        setContent(newContent)
-        // Set cursor after inserted image
-        setTimeout(() => {
-          textarea.focus()
-          textarea.setSelectionRange(start + imageMarkdown.length, start + imageMarkdown.length)
-        }, 0)
+        // Convert compressed blob to base64 data URL
+        const reader = new FileReader()
+        const imageData = await new Promise((resolve, reject) => {
+          reader.onload = (e) => resolve(e.target.result)
+          reader.onerror = reject
+          reader.readAsDataURL(compressedBlob)
+        })
+
+        const imageId = `img-${Date.now()}-${Math.random()}`
+        setImages(prev => [...prev, { id: imageId, url: imageData, name: file.name }])
+        
+        // Insert image placeholder in content
+        const imageMarkdown = `\n![${file.name}](${imageId})\n`
+        const textarea = contentTextareaRef.current
+        if (textarea) {
+          const start = textarea.selectionStart
+          const end = textarea.selectionEnd
+          const newContent = content.substring(0, start) + imageMarkdown + content.substring(end)
+          setContent(newContent)
+          // Set cursor after inserted image
+          setTimeout(() => {
+            textarea.focus()
+            textarea.setSelectionRange(start + imageMarkdown.length, start + imageMarkdown.length)
+          }, 0)
+        }
+      } catch (compressionError) {
+        console.error(`Error compressing ${file.name}:`, compressionError)
+        alert(`Failed to process ${file.name}. Please try a different image.`)
       }
     }
 
@@ -224,7 +297,7 @@ export default function BlogEditor({ onPublish }) {
           ref={contentTextareaRef}
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          placeholder="Write your blog post here... You can use markdown formatting. Click the image icon to upload images."
+          placeholder="Write your blog post here... You can use markdown formatting. Click the image icon to upload images (images are automatically compressed)."
           className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-pink-500 focus:outline-none transition-colors min-h-[300px] resize-y"
         />
         <p className="text-xs text-gray-500 mt-2">
