@@ -3,6 +3,57 @@ import { useState, useRef, useEffect } from 'react'
 import { Upload, X, Image as ImageIcon } from 'lucide-react'
 import { saveImage, loadImages, removeImage as removeImageFromDB } from '../../lib/imageStorage'
 
+// Compress and resize image
+const compressImage = (file, maxWidth = 1920, maxHeight = 1920, quality = 0.8) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const img = new Image()
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        let width = img.width
+        let height = img.height
+
+        // Calculate new dimensions
+        if (width > height) {
+          if (width > maxWidth) {
+            height = (height * maxWidth) / width
+            width = maxWidth
+          }
+        } else {
+          if (height > maxHeight) {
+            width = (width * maxHeight) / height
+            height = maxHeight
+          }
+        }
+
+        canvas.width = width
+        canvas.height = height
+
+        // Draw and compress
+        const ctx = canvas.getContext('2d')
+        ctx.drawImage(img, 0, 0, width, height)
+
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              resolve(blob)
+            } else {
+              reject(new Error('Failed to compress image'))
+            }
+          },
+          'image/jpeg',
+          quality
+        )
+      }
+      img.onerror = reject
+      img.src = e.target.result
+    }
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+}
+
 const WorkGallery = () => {
   const [images, setImages] = useState([])
   const [isUploading, setIsUploading] = useState(false)
@@ -43,36 +94,56 @@ const WorkGallery = () => {
           continue
         }
 
-        // Validate file size (max 5MB)
-        if (file.size > 5 * 1024 * 1024) {
-          alert(`${file.name} is too large. Please select images smaller than 5MB.`)
+        // Validate file size (max 10MB before compression)
+        if (file.size > 10 * 1024 * 1024) {
+          alert(`${file.name} is too large. Please select images smaller than 10MB.`)
           continue
         }
 
-        // Convert to base64 data URL
-        const reader = new FileReader()
-        const imageData = await new Promise((resolve, reject) => {
-          reader.onload = (e) => resolve(e.target.result)
-          reader.onerror = reject
-          reader.readAsDataURL(file)
-        })
-
-        const imageToSave = {
-          id: `img-${Date.now()}-${Math.random()}`,
-          url: imageData,
-          name: file.name,
-          uploadedAt: new Date().toISOString()
-        }
-
-        // Save to server
         try {
-          const savedImage = await saveImage(imageToSave)
-          uploadedImages.push(savedImage)
-          setImages(prev => [...prev, savedImage])
-        } catch (error) {
-          console.error(`Error saving ${file.name}:`, error)
-          const errorMessage = error.message || 'Unknown error occurred'
-          alert(`Failed to upload ${file.name}: ${errorMessage}`)
+          // Compress image before uploading (target ~1MB to stay well under Vercel's 4.5MB limit)
+          let compressedBlob = await compressImage(file, 1600, 1600, 0.7)
+          
+          // Progressive compression if still too large
+          if (compressedBlob.size > 1.5 * 1024 * 1024) {
+            compressedBlob = await compressImage(file, 1280, 1280, 0.6)
+          }
+          if (compressedBlob.size > 1.5 * 1024 * 1024) {
+            compressedBlob = await compressImage(file, 1024, 1024, 0.5)
+          }
+          if (compressedBlob.size > 1.5 * 1024 * 1024) {
+            alert(`${file.name} is still too large after compression (${(compressedBlob.size / 1024 / 1024).toFixed(2)}MB). Please use a smaller image.`)
+            continue
+          }
+
+          // Convert compressed blob to base64 data URL
+          const reader = new FileReader()
+          const imageData = await new Promise((resolve, reject) => {
+            reader.onload = (e) => resolve(e.target.result)
+            reader.onerror = reject
+            reader.readAsDataURL(compressedBlob)
+          })
+
+          const imageToSave = {
+            id: `img-${Date.now()}-${Math.random()}`,
+            url: imageData,
+            name: file.name,
+            uploadedAt: new Date().toISOString()
+          }
+
+          // Save to server
+          try {
+            const savedImage = await saveImage(imageToSave)
+            uploadedImages.push(savedImage)
+            setImages(prev => [...prev, savedImage])
+          } catch (error) {
+            console.error(`Error saving ${file.name}:`, error)
+            const errorMessage = error.message || 'Unknown error occurred'
+            alert(`Failed to upload ${file.name}: ${errorMessage}`)
+          }
+        } catch (compressionError) {
+          console.error(`Error compressing ${file.name}:`, compressionError)
+          alert(`Failed to process ${file.name}. Please try a different image.`)
         }
       }
 
@@ -141,7 +212,7 @@ const WorkGallery = () => {
             {isUploading ? 'Uploading...' : 'Upload Photos'}
           </button>
           <p className="text-sm text-gray-500 text-center mt-2">
-            You can upload multiple images at once (max 5MB per image). Images are shared with all visitors.
+            You can upload up to 8 images at once (max 10MB per image). Images are automatically compressed and shared with all visitors.
           </p>
         </div>
 
