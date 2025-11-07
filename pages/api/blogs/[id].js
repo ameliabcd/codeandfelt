@@ -1,20 +1,63 @@
 import fs from 'fs'
 import path from 'path'
+import os from 'os'
 
-const dataDir = path.join(process.cwd(), 'data')
+// Use /tmp on Vercel (writable), /data locally
+const isVercel = process.env.VERCEL === '1'
+const dataDir = isVercel 
+  ? path.join(os.tmpdir(), 'math-felt-data')
+  : path.join(process.cwd(), 'data')
 const blogsFile = path.join(dataDir, 'blogs.json')
 
-export default function handler(req, res) {
-  const { id } = req.query
+// In-memory fallback for Vercel (ephemeral but works)
+let memoryStore = []
 
-  if (req.method === 'GET') {
-    try {
-      if (!fs.existsSync(blogsFile)) {
-        return res.status(404).json({ error: 'Blog not found' })
-      }
-
+// Read blogs from file or memory
+function readBlogs() {
+  try {
+    if (fs.existsSync(blogsFile)) {
       const data = fs.readFileSync(blogsFile, 'utf8')
-      const blogs = JSON.parse(data)
+      return JSON.parse(data)
+    }
+  } catch (error) {
+    console.warn('Could not read blogs file, using memory store:', error.message)
+  }
+  return memoryStore
+}
+
+// Write blogs to file or memory
+function writeBlogs(blogs) {
+  try {
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true })
+    }
+    if (!fs.existsSync(blogsFile)) {
+      fs.writeFileSync(blogsFile, JSON.stringify([]))
+    }
+    fs.writeFileSync(blogsFile, JSON.stringify(blogs, null, 2))
+    return true
+  } catch (error) {
+    console.warn('Could not write blogs file, using memory store:', error.message)
+  }
+  memoryStore = blogs
+  return false
+}
+
+export default async function handler(req, res) {
+  const { id } = req.query
+  const method = (req.method || '').toUpperCase()
+
+  // Handle CORS preflight
+  if (method === 'OPTIONS') {
+    res.setHeader('Access-Control-Allow-Origin', '*')
+    res.setHeader('Access-Control-Allow-Methods', 'GET, DELETE, OPTIONS')
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+    return res.status(200).end()
+  }
+
+  if (method === 'GET') {
+    try {
+      const blogs = readBlogs()
       const blog = blogs.find(b => b.id === id)
       
       if (!blog) {
@@ -24,16 +67,11 @@ export default function handler(req, res) {
       res.status(200).json(blog)
     } catch (error) {
       console.error('Error reading blog:', error)
-      res.status(500).json({ error: 'Failed to load blog' })
+      res.status(500).json({ error: 'Failed to load blog', details: error.message })
     }
-  } else if (req.method === 'DELETE') {
+  } else if (method === 'DELETE') {
     try {
-      if (!fs.existsSync(blogsFile)) {
-        return res.status(404).json({ error: 'Blogs file not found' })
-      }
-
-      const data = fs.readFileSync(blogsFile, 'utf8')
-      const blogs = JSON.parse(data)
+      const blogs = readBlogs()
       
       const filteredBlogs = blogs.filter(blog => blog.id !== id)
       
@@ -41,16 +79,16 @@ export default function handler(req, res) {
         return res.status(404).json({ error: 'Blog not found' })
       }
       
-      fs.writeFileSync(blogsFile, JSON.stringify(filteredBlogs, null, 2))
+      writeBlogs(filteredBlogs)
       
       res.status(200).json({ success: true })
     } catch (error) {
       console.error('Error deleting blog:', error)
-      res.status(500).json({ error: 'Failed to delete blog' })
+      res.status(500).json({ error: 'Failed to delete blog', details: error.message })
     }
   } else {
-    res.setHeader('Allow', ['GET', 'DELETE'])
-    res.status(405).end(`Method ${req.method} Not Allowed`)
+    res.setHeader('Allow', ['GET', 'DELETE', 'OPTIONS'])
+    res.status(405).json({ error: `Method ${method} Not Allowed` })
   }
 }
 
