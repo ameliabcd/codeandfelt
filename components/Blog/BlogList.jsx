@@ -75,7 +75,7 @@ export default function BlogList({ onBlogSelect, refreshKey }) {
           <div className="flex items-center gap-4 text-gray-500 mb-6">
             <div className="flex items-center gap-2">
               <User className="w-4 h-4" />
-              <span>{selectedBlog.author || 'You'}</span>
+              <span>{selectedBlog.author || 'Anonymous'}</span>
             </div>
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4" />
@@ -228,7 +228,7 @@ export default function BlogList({ onBlogSelect, refreshKey }) {
                   </div>
                   <div className="flex items-center gap-1">
                     <User className="w-4 h-4" />
-                    <span>{blog.author || 'You'}</span>
+                    <span>{blog.author || 'Anonymous'}</span>
                   </div>
                 </div>
                 <p className="text-gray-600 mb-4 leading-relaxed">{excerpt}</p>

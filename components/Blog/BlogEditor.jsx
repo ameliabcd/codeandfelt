@@ -56,6 +56,7 @@ const compressImage = (file, maxWidth = 1920, maxHeight = 1920, quality = 0.8) =
 
 export default function BlogEditor({ onPublish }) {
   const [title, setTitle] = useState('')
+  const [author, setAuthor] = useState('')
   const [content, setContent] = useState('')
   const [images, setImages] = useState([])
   const [isPublishing, setIsPublishing] = useState(false)
@@ -178,13 +179,14 @@ export default function BlogEditor({ onPublish }) {
         content: finalContent,
         images: images,
         publishedAt: new Date().toISOString(),
-        author: 'You' // Could be made dynamic
+        author: author.trim() || 'Anonymous'
       }
 
       await saveBlog(blog)
       
       // Reset form
       setTitle('')
+      setAuthor('')
       setContent('')
       setImages([])
       setShowForm(false)
@@ -205,6 +207,7 @@ export default function BlogEditor({ onPublish }) {
   const handleCancel = () => {
     setShowForm(false)
     setTitle('')
+    setAuthor('')
     setContent('')
     setImages([])
     if (fileInputRef.current) {
@@ -254,6 +257,23 @@ export default function BlogEditor({ onPublish }) {
           placeholder="Enter your blog title..."
           className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-pink-500 focus:outline-none transition-colors text-lg"
         />
+      </div>
+
+      {/* Author Name Input */}
+      <div className="mb-6">
+        <label className="block text-sm font-semibold text-gray-700 mb-2">
+          Your Name (Optional)
+        </label>
+        <input
+          type="text"
+          value={author}
+          onChange={(e) => setAuthor(e.target.value)}
+          placeholder="Enter your name..."
+          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-pink-500 focus:outline-none transition-colors"
+        />
+        <p className="text-xs text-gray-500 mt-1">
+          Leave blank to publish as "Anonymous"
+        </p>
       </div>
 
       {/* Content Editor Toolbar */}
