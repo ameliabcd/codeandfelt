@@ -14,26 +14,23 @@ if (!fs.existsSync(imagesFile)) {
   fs.writeFileSync(imagesFile, JSON.stringify([]))
 }
 
-export default function handler(req, res) {
+export default async function handler(req, res) {
   // Log the incoming request for debugging
+  const method = req.method || 'UNKNOWN'
   console.log('API Request received:', {
-    method: req.method,
+    method: method,
     url: req.url,
-    headers: req.headers,
     bodyType: typeof req.body,
     bodyKeys: req.body ? Object.keys(req.body) : 'no body'
   })
   
   // Handle CORS preflight
-  if (req.method === 'OPTIONS') {
+  if (method === 'OPTIONS') {
     res.setHeader('Access-Control-Allow-Origin', '*')
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS')
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
     return res.status(200).end()
   }
-  
-  // Normalize method (sometimes it might come in lowercase)
-  const method = (req.method || '').toUpperCase()
 
   // Ensure data directory and file exist
   try {
@@ -57,7 +54,7 @@ export default function handler(req, res) {
       console.error('Error reading images:', error)
       res.status(500).json({ error: 'Failed to load images', details: error.message })
     }
-  } else if (method === 'POST') {
+  } else if (method === 'POST' || method === 'post') {
     try {
       console.log('POST request body:', JSON.stringify(req.body).substring(0, 200))
       
@@ -88,15 +85,21 @@ export default function handler(req, res) {
   } else {
     console.error('Unsupported method received:', {
       originalMethod: req.method,
-      normalizedMethod: method,
-      url: req.url
+      method: method,
+      url: req.url,
+      allHeaders: Object.keys(req.headers || {})
     })
     res.setHeader('Allow', ['GET', 'POST', 'OPTIONS'])
     res.status(405).json({ 
       error: `Method ${method || req.method || 'UNKNOWN'} Not Allowed`,
       receivedMethod: req.method,
-      normalizedMethod: method,
-      allowedMethods: ['GET', 'POST', 'OPTIONS']
+      method: method,
+      allowedMethods: ['GET', 'POST', 'OPTIONS'],
+      debug: {
+        reqMethod: req.method,
+        methodVar: method,
+        typeOfMethod: typeof method
+      }
     })
   }
 }
