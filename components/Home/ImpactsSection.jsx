@@ -60,6 +60,7 @@ export default function ImpactsSection() {
   const [editingId, setEditingId] = useState(null)
   const [showAddForm, setShowAddForm] = useState(false)
   const [isUploadingImage, setIsUploadingImage] = useState(false)
+  const [selectedImpact, setSelectedImpact] = useState(null)
   const fileInputRef = useRef(null)
   const [formData, setFormData] = useState({
     title: '',
@@ -452,6 +453,90 @@ export default function ImpactsSection() {
           </div>
         )}
 
+        {/* Impact Detail Modal */}
+        {selectedImpact && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+            onClick={() => setSelectedImpact(null)}
+          >
+            <div 
+              className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl relative"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-6">
+                {/* Close Button */}
+                <button
+                  onClick={() => setSelectedImpact(null)}
+                  className="absolute top-4 right-4 p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors z-10"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+
+                {/* Images */}
+                {(selectedImpact.images && selectedImpact.images.length > 0) || selectedImpact.image ? (
+                  <div className="mb-6">
+                    {selectedImpact.images && selectedImpact.images.length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {selectedImpact.images.map((img, idx) => (
+                          <img
+                            key={idx}
+                            src={img}
+                            alt={`${selectedImpact.title} ${idx + 1}`}
+                            className="w-full h-64 object-cover rounded-lg"
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <img
+                        src={selectedImpact.image}
+                        alt={selectedImpact.title}
+                        className="w-full h-64 object-cover rounded-lg"
+                      />
+                    )}
+                  </div>
+                ) : null}
+
+                {/* Category Badge */}
+                <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium mb-4 border ${getCategoryColor(selectedImpact.category)}`}>
+                  {getCategoryIcon(selectedImpact.category)}
+                  <span className="capitalize">{selectedImpact.category}</span>
+                </div>
+
+                {/* Title */}
+                <h2 className="text-3xl font-bold text-gray-800 mb-4">{selectedImpact.title}</h2>
+
+                {/* Date, Location, Amount */}
+                <div className="flex flex-col gap-3 mb-6 text-gray-600">
+                  {selectedImpact.date && (
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-5 h-5" />
+                      <span>{formatDate(selectedImpact.date)}</span>
+                    </div>
+                  )}
+                  {selectedImpact.location && (
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-5 h-5" />
+                      <span>{selectedImpact.location}</span>
+                    </div>
+                  )}
+                  {selectedImpact.amount && (
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="w-5 h-5" />
+                      <span className="font-semibold text-lg">{formatAmount(selectedImpact.amount)}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Full Description */}
+                <div className="mb-6">
+                  <h3 className="text-xl font-semibold text-gray-800 mb-3">Description</h3>
+                  <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">{selectedImpact.description}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Impacts Grid */}
         {impacts.length === 0 ? (
           <div className="text-center py-12 bg-gray-50 rounded-xl">
@@ -463,7 +548,8 @@ export default function ImpactsSection() {
             {impacts.map((impact) => (
               <div
                 key={impact.id}
-                className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-100 hover:shadow-xl transition-shadow"
+                className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-100 hover:shadow-xl transition-shadow cursor-pointer"
+                onClick={() => setSelectedImpact(impact)}
               >
                 {/* Images */}
                 {(impact.images && impact.images.length > 0) || impact.image ? (
@@ -535,7 +621,7 @@ export default function ImpactsSection() {
                 <p className="text-gray-700 mb-4 line-clamp-3">{impact.description}</p>
 
                 {/* Edit/Delete Buttons */}
-                <div className="flex gap-2 pt-4 border-t border-gray-200">
+                <div className="flex gap-2 pt-4 border-t border-gray-200" onClick={(e) => e.stopPropagation()}>
                   <button
                     onClick={() => handleEdit(impact)}
                     className="flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm"
