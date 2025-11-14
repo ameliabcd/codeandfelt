@@ -34,8 +34,8 @@ export default function Contact() {
   return (
     <>
       <Head>
-        <title>Contact - Math & Felt</title>
-        <meta name="description" content="Get in touch with Math & Felt" />
+        <title>Contact - Modern Fiber Arts</title>
+        <meta name="description" content="Get in touch with Modern Fiber Arts" />
       </Head>
       
       <div className="min-h-screen bg-gradient-to-b from-pink-50 to-blue-50 py-20">

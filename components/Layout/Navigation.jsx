@@ -23,7 +23,7 @@ const Navigation = () => {
             <div className="w-10 h-10 bg-gradient-to-br from-pink-200 to-blue-200 rounded-full flex items-center justify-center text-xl">
               🧶
             </div>
-            <span className="font-serif text-xl font-bold text-gray-800">Math & Felt</span>
+            <span className="font-serif text-xl font-bold text-gray-800">Modern Fiber Arts</span>
           </Link>
           
           <div className="hidden md:flex space-x-8">

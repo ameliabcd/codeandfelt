@@ -30,7 +30,7 @@ export default function Gallery() {
     return (
       <>
         <Head>
-          <title>{selectedPattern.title} - Math & Felt</title>
+          <title>{selectedPattern.title} - Modern Fiber Arts</title>
           <meta name="description" content={selectedPattern.description} />
         </Head>
         <PatternDetail pattern={selectedPattern} onBack={() => setSelectedPattern(null)} />
@@ -41,7 +41,7 @@ export default function Gallery() {
   return (
     <>
       <Head>
-        <title>Pattern Gallery - Math & Felt</title>
+        <title>Pattern Gallery - Modern Fiber Arts</title>
         <meta name="description" content="Discover patterns created by our community" />
       </Head>
       

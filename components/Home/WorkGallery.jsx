@@ -243,13 +243,6 @@ const WorkGallery = () => {
                       </button>
                     </div>
                   </div>
-                  
-                  {/* Image Info */}
-                  <div className="p-4">
-                    <p className="text-sm text-gray-600 truncate" title={image.name}>
-                      {image.name}
-                    </p>
-                  </div>
                 </div>
               ))}
             </div>

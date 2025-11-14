@@ -8,7 +8,7 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>Math & Felt - Turn Data Into Felting Patterns</title>
+        <title>Modern Fiber Arts - Turn Data Into Felting Patterns</title>
         <meta name="description" content="Transform your spreadsheets, APIs, and data files into beautiful, feltable patterns." />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />

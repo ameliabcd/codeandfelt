@@ -15,8 +15,8 @@ export default function About() {
   return (
     <>
       <Head>
-        <title>About & Blog - Math & Felt</title>
-        <meta name="description" content="Learn about Math & Felt and read our latest blog posts" />
+        <title>About & Blog - Modern Fiber Arts</title>
+        <meta name="description" content="Learn about Modern Fiber Arts and read our latest blog posts" />
       </Head>
       
       <div className="min-h-screen bg-white py-20">
@@ -26,7 +26,7 @@ export default function About() {
             <div>
               <h1 className="font-serif text-5xl font-bold text-gray-800 mb-6">Our Story</h1>
               <p className="text-xl text-gray-600 mb-6 leading-relaxed">
-                Math & Felt was born from the intersection of two passions: data science and fiber arts. 
+                Modern Fiber Arts was born from the intersection of two passions: data science and fiber arts. 
                 We believe that data can be beautiful, tactile, and deeply personal.
               </p>
               <p className="text-lg text-gray-600 leading-relaxed">
