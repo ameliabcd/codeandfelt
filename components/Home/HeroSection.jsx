@@ -70,21 +70,14 @@ const HeroSection = () => {
               ? 'text-2xl md:text-3xl mb-2' 
               : 'text-5xl md:text-7xl mb-6'
           }`}>
-            Turn Data Into
-            <span className="text-gradient">
-              {" "}Felting Patterns
-            </span>
+            Modern Fiber Arts: Needle Felters
           </h1>
           {!isCollapsed && (
             <>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8 leading-relaxed">
-                Transform your spreadsheets, APIs, and data files into beautiful, feltable patterns. 
-                Where math meets craft, and data becomes art.
+                A student-led community exploring fiber art through creativity, collaboration, and care!
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link href="/generator" className="btn-primary">
-                  Try the Generator
-                </Link>
                 <Link href="/about" className="btn-secondary">
                   Learn More
                 </Link>

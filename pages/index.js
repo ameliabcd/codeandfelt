@@ -8,8 +8,8 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>Modern Fiber Arts - Turn Data Into Felting Patterns</title>
-        <meta name="description" content="Transform your spreadsheets, APIs, and data files into beautiful, feltable patterns." />
+        <title>Modern Fiber Arts: Needle Felters</title>
+        <meta name="description" content="A student-led community exploring fiber art through creativity, collaboration, and care!" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
