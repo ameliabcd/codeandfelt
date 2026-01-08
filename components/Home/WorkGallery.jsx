@@ -217,35 +217,35 @@ const WorkGallery = () => {
         {images.length > 0 ? (
           <div className="overflow-x-auto pb-4 -mx-4 px-4 scroll-smooth" style={{ scrollbarWidth: 'thin', scrollbarColor: '#f9a8d4 #f1f1f1' }}>
             <div className="flex gap-6 min-w-max">
-              {images.map((image) => (
-                <div
-                  key={image.id}
+            {images.map((image) => (
+              <div
+                key={image.id}
                   className="relative group bg-white rounded-xl shadow-lg overflow-hidden flex-shrink-0 w-64 hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer"
-                >
-                  {/* Image */}
-                  <div className="aspect-square relative overflow-hidden bg-gray-100">
-                    <img
-                      src={image.url}
-                      alt={image.name}
+              >
+                {/* Image */}
+                <div className="aspect-square relative overflow-hidden bg-gray-100">
+                  <img
+                    src={image.url}
+                    alt={image.name}
                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                    />
-                    {/* Overlay with remove button */}
+                  />
+                  {/* Overlay with remove button */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4">
-                      <button
+                    <button
                         onClick={(e) => {
                           e.stopPropagation()
                           handleRemoveImage(image.id)
                         }}
                         className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-full shadow-lg transition-all duration-200 hover:scale-110"
-                        aria-label="Remove image"
-                      >
-                        <X className="w-5 h-5" />
-                      </button>
-                    </div>
+                      aria-label="Remove image"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
                   </div>
                 </div>
+                </div>
               ))}
-            </div>
+              </div>
           </div>
         ) : (
           <div className="text-center py-12 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-300">
