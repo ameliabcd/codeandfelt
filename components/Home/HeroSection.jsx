@@ -1,7 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { ChevronDown, ChevronUp } from 'lucide-react'
 
 // Your local images - Add your images to public/images/hero/ folder
 // Then update the paths below to match your image filenames
@@ -71,7 +70,6 @@ const DEMO_IMAGES = [
 
 const HeroSection = () => {
   const [backgroundImages, setBackgroundImages] = useState(DEMO_IMAGES) // Start with demo images
-  const [isCollapsed, setIsCollapsed] = useState(false)
   const sectionRef = useRef(null)
   const [currentPage, setCurrentPage] = useState(0)
 
@@ -138,14 +136,12 @@ const HeroSection = () => {
   return (
     <section 
       ref={sectionRef}
-      className={`relative overflow-hidden transition-all duration-500 ease-in-out ${
-        isCollapsed ? 'min-h-[200px]' : 'min-h-screen'
-      }`}
+      className="relative overflow-hidden transition-all duration-500 ease-in-out min-h-screen"
     >
       {/* Background Images - 3 per page, manual navigation only */}
       {backgroundImages.length > 0 && (
         <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
-          <div className="flex items-center justify-center h-full gap-4 px-4">
+          <div className="flex items-start justify-center h-full gap-2 px-4 pt-0">
             {currentPageImages.map((img, index) => (
               <div
                 key={`hero-bg-${img.id}-${currentPage}`}
@@ -188,50 +184,19 @@ const HeroSection = () => {
       )}
 
       <div className="max-w-7xl mx-auto relative z-10 py-20 px-4 sm:px-6 lg:px-8 h-full flex items-center justify-center">
-        <div className={`text-center transition-all duration-500 w-full flex flex-col items-center justify-center ${
-          isCollapsed ? 'mb-4' : 'mb-16 mt-32'
-        }`}>
-          <h1 className={`font-serif font-bold text-gray-800 leading-tight transition-all duration-500 ${
-            isCollapsed 
-              ? 'text-2xl md:text-3xl mb-2' 
-              : 'text-5xl md:text-7xl mb-6'
-          }`}>
+        <div className="text-center transition-all duration-500 w-full flex flex-col items-center justify-center mb-16 mt-32">
+          <h1 className="font-serif font-bold text-gray-800 leading-tight transition-all duration-500 text-5xl md:text-7xl mb-6">
             Modern Fiber Arts: Needle Felters
           </h1>
-          {!isCollapsed && (
-            <>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8 leading-relaxed">
-                A student-led community exploring fiber art through creativity, collaboration, and care!
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link href="/about" className="btn-secondary">
-                  Learn More
-                </Link>
-              </div>
-            </>
-          )}
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8 leading-relaxed">
+            A student-led community exploring fiber art through creativity, collaboration, and care!
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/about" className="btn-secondary">
+              Learn More
+            </Link>
+          </div>
         </div>
-      </div>
-
-      {/* Collapse/Expand Button */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-20">
-        <button
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="bg-white/90 backdrop-blur-sm rounded-full p-3 shadow-lg hover:bg-white transition-all flex items-center gap-2 text-gray-700 hover:text-pink-500"
-          title={isCollapsed ? "Expand to see content" : "Collapse to see more images"}
-        >
-          {isCollapsed ? (
-            <>
-              <ChevronDown className="w-5 h-5" />
-              <span className="text-sm font-medium">Show Content</span>
-            </>
-          ) : (
-            <>
-              <ChevronUp className="w-5 h-5" />
-              <span className="text-sm font-medium">See More Images</span>
-            </>
-          )}
-        </button>
       </div>
     </section>
   )
