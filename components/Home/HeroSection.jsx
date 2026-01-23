@@ -7,6 +7,7 @@ const HeroSection = () => {
   const [backgroundImages, setBackgroundImages] = useState([])
   const [isCollapsed, setIsCollapsed] = useState(false)
   const sectionRef = useRef(null)
+  const [scrollY, setScrollY] = useState(0)
 
   // Load images from server for background
   const loadBackgroundImages = async () => {
@@ -29,8 +30,15 @@ const HeroSection = () => {
     }
     window.addEventListener('workGalleryUpdated', handleCustomStorage)
 
+    // Parallax scroll effect
+    const handleScroll = () => {
+      setScrollY(window.scrollY)
+    }
+    window.addEventListener('scroll', handleScroll, { passive: true })
+
     return () => {
       window.removeEventListener('workGalleryUpdated', handleCustomStorage)
+      window.removeEventListener('scroll', handleScroll)
     }
   }, [])
 
@@ -41,22 +49,44 @@ const HeroSection = () => {
         isCollapsed ? 'min-h-[200px]' : 'min-h-screen'
       }`}
     >
-      {/* Background Grid - Fixed grid layout in top section */}
+      {/* Animated Background Images */}
       {backgroundImages.length > 0 && (
         <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-0 p-0 h-full">
-            {backgroundImages.slice(0, 8).map((img, index) => (
-              <div
-                key={`hero-bg-${img.id}`}
-                className="relative aspect-square opacity-[0.30] hover:opacity-[0.40] transition-all duration-300 transform hover:scale-105 w-full h-full"
-              >
-                <img
-                  src={img.url}
-                  alt=""
-                  className="w-full h-full object-cover shadow-lg"
-                />
-              </div>
-            ))}
+            {backgroundImages.slice(0, 8).map((img, index) => {
+              // Different animation speeds and delays for variety
+              const animationDuration = 15 + (index % 3) * 5 // 15s, 20s, or 25s
+              const animationDelay = index * 0.5 // Stagger the animations
+              const parallaxSpeed = 0.1 + (index % 3) * 0.05 // Different parallax speeds
+              const translateY = scrollY * parallaxSpeed
+              
+              return (
+                <div
+                  key={`hero-bg-${img.id}`}
+                  className="relative aspect-square w-full h-full"
+                  style={{
+                    transform: `translateY(${translateY}px)`,
+                  }}
+                >
+                  <div
+                    className="relative w-full h-full opacity-[0.25] hover:opacity-[0.35] transition-opacity duration-300 animated-bg-image"
+                    style={{
+                      animationDuration: `${animationDuration}s`,
+                      animationDelay: `${animationDelay}s`,
+                    }}
+                  >
+                    <img
+                      src={img.url}
+                      alt=""
+                      className="w-full h-full object-cover shadow-lg rounded-lg"
+                      style={{
+                        filter: 'blur(0.5px)',
+                      }}
+                    />
+                  </div>
+                </div>
+              )
+            })}
           </div>
         </div>
       )}
