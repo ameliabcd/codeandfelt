@@ -70,82 +70,27 @@ const DEMO_IMAGES = [
 
 const HeroSection = () => {
   const [backgroundImages, setBackgroundImages] = useState(DEMO_IMAGES) // Start with demo images
-  const sectionRef = useRef(null)
-  const [currentPage, setCurrentPage] = useState(0)
-
-  // No longer loading from API - using demo images only
-
-  // Calculate total pages (3 images per page)
-  const totalPages = Math.ceil(backgroundImages.length / 3)
-  const currentPageImages = backgroundImages.slice(currentPage * 3, (currentPage * 3) + 3)
-
-  // No useEffect needed - using static demo images
-
-  // Handle keyboard and touch navigation (no auto-switch)
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (totalPages <= 1) return
-      
-      if (e.key === 'ArrowLeft' && currentPage > 0) {
-        setCurrentPage(prev => prev - 1)
-      } else if (e.key === 'ArrowRight' && currentPage < totalPages - 1) {
-        setCurrentPage(prev => prev + 1)
-      }
-    }
-
-    let touchStartX = 0
-    let touchEndX = 0
-
-    const handleTouchStart = (e) => {
-      touchStartX = e.changedTouches[0].screenX
-    }
-
-    const handleTouchEnd = (e) => {
-      touchEndX = e.changedTouches[0].screenX
-      handleSwipe()
-    }
-
-    const handleSwipe = () => {
-      if (totalPages <= 1) return
-      const swipeDistance = touchStartX - touchEndX
-      const minSwipeDistance = 50
-
-      if (swipeDistance > minSwipeDistance && currentPage < totalPages - 1) {
-        setCurrentPage(prev => prev + 1)
-      } else if (swipeDistance < -minSwipeDistance && currentPage > 0) {
-        setCurrentPage(prev => prev - 1)
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    const section = sectionRef.current
-    if (section) {
-      section.addEventListener('touchstart', handleTouchStart, { passive: true })
-      section.addEventListener('touchend', handleTouchEnd, { passive: true })
-    }
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-      if (section) {
-        section.removeEventListener('touchstart', handleTouchStart)
-        section.removeEventListener('touchend', handleTouchEnd)
-      }
-    }
-  }, [currentPage, totalPages])
+  const scrollContainerRef = useRef(null)
 
   return (
     <section 
-      ref={sectionRef}
       className="relative overflow-hidden transition-all duration-500 ease-in-out min-h-screen"
     >
-      {/* Background Images - 3 per page, manual navigation only */}
+      {/* Background Images - Horizontal scrollable */}
       {backgroundImages.length > 0 && (
-        <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
-          <div className="flex items-start justify-center h-full gap-2 px-4 pt-0">
-            {currentPageImages.map((img, index) => (
+        <div className="absolute inset-0 z-0 overflow-x-auto overflow-y-hidden">
+          <div 
+            ref={scrollContainerRef}
+            className="flex items-start h-full gap-2 px-4 pt-0"
+            style={{
+              scrollbarWidth: 'thin',
+              scrollbarColor: '#f9a8d4 transparent',
+            }}
+          >
+            {backgroundImages.map((img, index) => (
               <div
-                key={`hero-bg-${img.id}-${currentPage}`}
-                className="relative w-full max-w-md h-3/4 opacity-[0.25] hover:opacity-[0.35] transition-all duration-500"
+                key={`hero-bg-${img.id}`}
+                className="relative flex-shrink-0 w-80 h-full opacity-[0.25] hover:opacity-[0.35] transition-all duration-500 pointer-events-none"
                 style={{
                   animation: 'fadeIn 0.5s ease-in',
                 }}
@@ -162,24 +107,6 @@ const HeroSection = () => {
               </div>
             ))}
           </div>
-          
-          {/* Page indicators */}
-          {totalPages > 1 && (
-            <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 flex gap-2 z-10">
-              {Array.from({ length: totalPages }).map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentPage(index)}
-                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                    index === currentPage 
-                      ? 'bg-pink-500 w-8' 
-                      : 'bg-gray-300 hover:bg-gray-400'
-                  }`}
-                  aria-label={`Go to page ${index + 1}`}
-                />
-              ))}
-            </div>
-          )}
         </div>
       )}
 

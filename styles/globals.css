@@ -78,3 +78,21 @@
     transform: scale(1);
   }
 }
+
+/* Custom scrollbar for horizontal image scrolling */
+.overflow-x-auto::-webkit-scrollbar {
+  height: 8px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb {
+  background: #f9a8d4;
+  border-radius: 4px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb:hover {
+  background: #f472b6;
+}
