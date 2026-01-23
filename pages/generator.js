@@ -54,6 +54,14 @@ export default function Generator() {
           <div className="text-center mb-12">
             <h1 className="font-serif text-5xl font-bold text-gray-800 mb-4">Pattern Generator</h1>
             <p className="text-xl text-gray-600 mb-6">Transform your data into beautiful felting patterns</p>
+            <div className="mt-6">
+              <a 
+                href="/gallery" 
+                className="inline-block px-6 py-3 bg-white text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-all duration-200 shadow-md hover:shadow-lg border border-gray-200"
+              >
+                View Pattern Gallery →
+              </a>
+            </div>
             
             {/* Pattern Mode Toggle */}
             <div className="flex justify-center">

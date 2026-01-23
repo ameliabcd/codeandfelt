@@ -7,21 +7,51 @@ const HeroSection = () => {
   const [backgroundImages, setBackgroundImages] = useState([])
   const [isCollapsed, setIsCollapsed] = useState(false)
   const sectionRef = useRef(null)
-  const [scrollY, setScrollY] = useState(0)
+  const [currentPage, setCurrentPage] = useState(0)
+  const autoSwitchTimerRef = useRef(null)
+  const [imagesLoading, setImagesLoading] = useState(true)
 
-  // Load images from server for background
+  // Load images directly from API (faster than dynamic import)
   const loadBackgroundImages = async () => {
     try {
-      const { loadImages } = await import('../../lib/imageStorage')
-      const images = await loadImages()
-      setBackgroundImages(images.slice(0, 8)) // Show up to 8 images
+      setImagesLoading(true)
+      const response = await fetch('/api/images')
+      if (!response.ok) {
+        throw new Error('Failed to load images')
+      }
+      const images = await response.json()
+      setBackgroundImages(images || [])
+      setImagesLoading(false)
+      // Reset to first page if current page is out of bounds
+      const newTotalPages = Math.ceil((images?.length || 0) / 3)
+      if (currentPage >= newTotalPages && newTotalPages > 0) {
+        setCurrentPage(0)
+      }
     } catch (error) {
       console.error('Error loading background images:', error)
-        setBackgroundImages([])
+      setBackgroundImages([])
+      setImagesLoading(false)
+    }
+  }
+
+  // Calculate total pages (3 images per page)
+  const totalPages = Math.ceil(backgroundImages.length / 3)
+  const currentPageImages = backgroundImages.slice(currentPage * 3, (currentPage * 3) + 3)
+
+  // Helper to reset auto-switch timer
+  const resetAutoSwitch = () => {
+    if (autoSwitchTimerRef.current) {
+      clearInterval(autoSwitchTimerRef.current)
+    }
+    if (totalPages > 1) {
+      autoSwitchTimerRef.current = setInterval(() => {
+        setCurrentPage((prev) => (prev + 1) % totalPages)
+      }, 3000)
     }
   }
 
   useEffect(() => {
+    // Load images immediately
     loadBackgroundImages()
     
     // Listen for custom event from WorkGallery component
@@ -30,17 +60,77 @@ const HeroSection = () => {
     }
     window.addEventListener('workGalleryUpdated', handleCustomStorage)
 
-    // Parallax scroll effect
-    const handleScroll = () => {
-      setScrollY(window.scrollY)
-    }
-    window.addEventListener('scroll', handleScroll, { passive: true })
-
     return () => {
       window.removeEventListener('workGalleryUpdated', handleCustomStorage)
-      window.removeEventListener('scroll', handleScroll)
     }
   }, [])
+
+
+  // Auto-switch pages every 3 seconds
+  useEffect(() => {
+    resetAutoSwitch()
+    return () => {
+      if (autoSwitchTimerRef.current) {
+        clearInterval(autoSwitchTimerRef.current)
+      }
+    }
+  }, [totalPages])
+
+  // Handle keyboard and touch navigation
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (totalPages <= 1) return
+      
+      if (e.key === 'ArrowLeft' && currentPage > 0) {
+        setCurrentPage(prev => prev - 1)
+        resetAutoSwitch()
+      } else if (e.key === 'ArrowRight' && currentPage < totalPages - 1) {
+        setCurrentPage(prev => prev + 1)
+        resetAutoSwitch()
+      }
+    }
+
+    let touchStartX = 0
+    let touchEndX = 0
+
+    const handleTouchStart = (e) => {
+      touchStartX = e.changedTouches[0].screenX
+    }
+
+    const handleTouchEnd = (e) => {
+      touchEndX = e.changedTouches[0].screenX
+      handleSwipe()
+    }
+
+    const handleSwipe = () => {
+      if (totalPages <= 1) return
+      const swipeDistance = touchStartX - touchEndX
+      const minSwipeDistance = 50
+
+      if (swipeDistance > minSwipeDistance && currentPage < totalPages - 1) {
+        setCurrentPage(prev => prev + 1)
+        resetAutoSwitch()
+      } else if (swipeDistance < -minSwipeDistance && currentPage > 0) {
+        setCurrentPage(prev => prev - 1)
+        resetAutoSwitch()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    const section = sectionRef.current
+    if (section) {
+      section.addEventListener('touchstart', handleTouchStart, { passive: true })
+      section.addEventListener('touchend', handleTouchEnd, { passive: true })
+    }
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      if (section) {
+        section.removeEventListener('touchstart', handleTouchStart)
+        section.removeEventListener('touchend', handleTouchEnd)
+      }
+    }
+  }, [currentPage, totalPages])
 
   return (
     <section 
@@ -49,45 +139,51 @@ const HeroSection = () => {
         isCollapsed ? 'min-h-[200px]' : 'min-h-screen'
       }`}
     >
-      {/* Animated Background Images */}
-      {backgroundImages.length > 0 && (
+      {/* Background Images - 3 per page with auto-switch */}
+      {!imagesLoading && backgroundImages.length > 0 && (
         <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-0 p-0 h-full">
-            {backgroundImages.slice(0, 8).map((img, index) => {
-              // Different animation speeds and delays for variety
-              const animationDuration = 15 + (index % 3) * 5 // 15s, 20s, or 25s
-              const animationDelay = index * 0.5 // Stagger the animations
-              const parallaxSpeed = 0.1 + (index % 3) * 0.05 // Different parallax speeds
-              const translateY = scrollY * parallaxSpeed
-              
-              return (
-                <div
-                  key={`hero-bg-${img.id}`}
-                  className="relative aspect-square w-full h-full"
+          <div className="flex items-center justify-center h-full gap-4 px-4">
+            {currentPageImages.map((img, index) => (
+              <div
+                key={`hero-bg-${img.id}-${currentPage}`}
+                className="relative w-full max-w-md h-3/4 opacity-[0.25] hover:opacity-[0.35] transition-all duration-500"
+                style={{
+                  animation: 'fadeIn 0.5s ease-in',
+                }}
+              >
+                <img
+                  src={img.url}
+                  alt=""
+                  className="w-full h-full object-cover shadow-lg rounded-lg"
+                  loading="eager"
                   style={{
-                    transform: `translateY(${translateY}px)`,
+                    filter: 'blur(0.5px)',
                   }}
-                >
-                  <div
-                    className="relative w-full h-full opacity-[0.25] hover:opacity-[0.35] transition-opacity duration-300 animated-bg-image"
-                    style={{
-                      animationDuration: `${animationDuration}s`,
-                      animationDelay: `${animationDelay}s`,
-                    }}
-                  >
-                    <img
-                      src={img.url}
-                      alt=""
-                      className="w-full h-full object-cover shadow-lg rounded-lg"
-                      style={{
-                        filter: 'blur(0.5px)',
-                      }}
-                    />
-                  </div>
-                </div>
-              )
-            })}
+                />
+              </div>
+            ))}
           </div>
+          
+          {/* Page indicators */}
+          {totalPages > 1 && (
+            <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 flex gap-2 z-10">
+              {Array.from({ length: totalPages }).map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => {
+                    setCurrentPage(index)
+                    resetAutoSwitch()
+                  }}
+                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                    index === currentPage 
+                      ? 'bg-pink-500 w-8' 
+                      : 'bg-gray-300 hover:bg-gray-400'
+                  }`}
+                  aria-label={`Go to page ${index + 1}`}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
 
