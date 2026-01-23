@@ -17,8 +17,9 @@ let memoryStore = []
 async function readContacts() {
   if (useRedis && redis) {
     try {
-      const contacts = await redis.get('contacts') || []
-      return contacts
+      const contacts = await redis.get('contacts')
+      console.log('Read contacts from Redis:', contacts ? `${contacts.length} contacts` : 'null')
+      return Array.isArray(contacts) ? contacts : []
     } catch (error) {
       console.error('Error reading from Redis:', error)
       return []
@@ -28,12 +29,13 @@ async function readContacts() {
   try {
     if (fs.existsSync(contactsFile)) {
       const data = fs.readFileSync(contactsFile, 'utf8')
-      return JSON.parse(data)
+      const parsed = JSON.parse(data)
+      return Array.isArray(parsed) ? parsed : []
     }
   } catch (error) {
     console.warn('Could not read contacts file, using memory store:', error.message)
   }
-  return memoryStore
+  return Array.isArray(memoryStore) ? memoryStore : []
 }
 
 // Write contacts to Redis, file, or memory

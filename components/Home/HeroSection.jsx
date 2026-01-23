@@ -72,67 +72,45 @@ const HeroSection = () => {
   const [backgroundImages, setBackgroundImages] = useState(DEMO_IMAGES)
   const [currentPage, setCurrentPage] = useState(0)
   const sectionRef = useRef(null)
-  const lastMouseX = useRef(0)
-  const mouseMoveTimeout = useRef(null)
 
   // Calculate total pages (3 images per page)
   const totalPages = Math.ceil(backgroundImages.length / 3)
   const currentPageImages = backgroundImages.slice(currentPage * 3, (currentPage * 3) + 3)
 
-  // Handle mouse movement for page navigation
+  // Handle scroll wheel for page navigation
   useEffect(() => {
     if (totalPages <= 1) return
 
-    let isInitialized = false
-    
-    const handleMouseMove = (e) => {
+    const handleWheel = (e) => {
       if (!sectionRef.current) return
       
-      const currentX = e.clientX
+      // Only handle horizontal scroll or significant vertical scroll
+      const isHorizontalScroll = Math.abs(e.deltaX) > Math.abs(e.deltaY)
+      const scrollThreshold = 50
       
-      // Initialize on first move
-      if (!isInitialized) {
-        lastMouseX.current = currentX
-        isInitialized = true
-        return
-      }
-      
-      const previousX = lastMouseX.current
-      const threshold = 100 // Minimum movement to trigger page change
-      const movement = currentX - previousX
-      
-      // Clear any existing timeout
-      if (mouseMoveTimeout.current) {
-        clearTimeout(mouseMoveTimeout.current)
-      }
-      
-      // Only trigger if mouse moved significantly
-      if (Math.abs(movement) > threshold) {
-        if (movement < 0 && currentPage < totalPages - 1) {
-          // Mouse moved left - go to next page
+      if (isHorizontalScroll) {
+        e.preventDefault()
+        if (e.deltaX > scrollThreshold && currentPage < totalPages - 1) {
           setCurrentPage(prev => Math.min(prev + 1, totalPages - 1))
-          lastMouseX.current = currentX
-        } else if (movement > 0 && currentPage > 0) {
-          // Mouse moved right - go to previous page
+        } else if (e.deltaX < -scrollThreshold && currentPage > 0) {
           setCurrentPage(prev => Math.max(prev - 1, 0))
-          lastMouseX.current = currentX
+        }
+      } else if (Math.abs(e.deltaY) > scrollThreshold) {
+        // Also allow vertical scroll to navigate (optional)
+        e.preventDefault()
+        if (e.deltaY > scrollThreshold && currentPage < totalPages - 1) {
+          setCurrentPage(prev => Math.min(prev + 1, totalPages - 1))
+        } else if (e.deltaY < -scrollThreshold && currentPage > 0) {
+          setCurrentPage(prev => Math.max(prev - 1, 0))
         }
       }
-      
-      // Update last position after a delay to prevent rapid switching
-      mouseMoveTimeout.current = setTimeout(() => {
-        lastMouseX.current = currentX
-      }, 500)
     }
 
     const section = sectionRef.current
     if (section) {
-      section.addEventListener('mousemove', handleMouseMove)
+      section.addEventListener('wheel', handleWheel, { passive: false })
       return () => {
-        section.removeEventListener('mousemove', handleMouseMove)
-        if (mouseMoveTimeout.current) {
-          clearTimeout(mouseMoveTimeout.current)
-        }
+        section.removeEventListener('wheel', handleWheel)
       }
     }
   }, [currentPage, totalPages])
@@ -142,7 +120,7 @@ const HeroSection = () => {
       ref={sectionRef}
       className="relative overflow-hidden transition-all duration-500 ease-in-out min-h-screen"
     >
-      {/* Background Images - Mouse movement navigation */}
+      {/* Background Images - Scroll navigation (no scrollbar) */}
       {backgroundImages.length > 0 && (
         <div className="absolute inset-0 z-0 overflow-hidden">
           <div className="flex items-start justify-center h-full gap-2 px-4 pt-0">
