@@ -3,90 +3,95 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 
+// Your local images - Add your images to public/images/hero/ folder
+// Then update the paths below to match your image filenames
+// Example: If you add "my-artwork.jpg", use: '/images/hero/my-artwork.jpg'
+const DEMO_IMAGES = [
+  {
+    id: 'image-1',
+    url: '/images/hero/image4.JPG',
+    name: 'Fiber Art 1'
+  },
+  {
+    id: 'image-2',
+    url: '/images/hero/image5.JPG',
+    name: 'Fiber Art 2'
+  },
+  {
+    id: 'image-3',
+    url: '/images/hero/image6.JPG',
+    name: 'Fiber Art 3'
+  },
+  {
+    id: 'image-4',
+    url: '/images/hero/image1.png',
+    name: 'Fiber Art 4'
+  },
+  {
+    id: 'image-5',
+    url: '/images/hero/image2.JPG',
+    name: 'Fiber Art 5'
+  },
+  {
+    id: 'image-6',
+    url: '/images/hero/image3.jpg',
+    name: 'Fiber Art 6'
+  },
+  {
+    id: 'image-7',
+    url: '/images/hero/image7.JPG',
+    name: 'Fiber Art 7'
+  },
+  {
+    id: 'image-8',
+    url: '/images/hero/image8.jpg',
+    name: 'Fiber Art 8'
+  },
+  {
+    id: 'image-9',
+    url: '/images/hero/image9.jpg',
+    name: 'Fiber Art 9'
+  },
+  {
+    id: 'image-10',
+    url: '/images/hero/image10.jpg',
+    name: 'Fiber Art 10'
+  },
+  {
+    id: 'image-11',
+    url: '/images/hero/image11.jpg',
+    name: 'Fiber Art 11'
+  },
+  {
+    id: 'image-12',
+    url: '/images/hero/image12.jpg',
+    name: 'Fiber Art 12'
+  }
+]
+
 const HeroSection = () => {
-  const [backgroundImages, setBackgroundImages] = useState([])
+  const [backgroundImages, setBackgroundImages] = useState(DEMO_IMAGES) // Start with demo images
   const [isCollapsed, setIsCollapsed] = useState(false)
   const sectionRef = useRef(null)
   const [currentPage, setCurrentPage] = useState(0)
-  const autoSwitchTimerRef = useRef(null)
-  const [imagesLoading, setImagesLoading] = useState(true)
 
-  // Load images directly from API (faster than dynamic import)
-  const loadBackgroundImages = async () => {
-    try {
-      setImagesLoading(true)
-      const response = await fetch('/api/images')
-      if (!response.ok) {
-        throw new Error('Failed to load images')
-      }
-      const images = await response.json()
-      setBackgroundImages(images || [])
-      setImagesLoading(false)
-      // Reset to first page if current page is out of bounds
-      const newTotalPages = Math.ceil((images?.length || 0) / 3)
-      if (currentPage >= newTotalPages && newTotalPages > 0) {
-        setCurrentPage(0)
-      }
-    } catch (error) {
-      console.error('Error loading background images:', error)
-      setBackgroundImages([])
-      setImagesLoading(false)
-    }
-  }
+  // No longer loading from API - using demo images only
 
   // Calculate total pages (3 images per page)
   const totalPages = Math.ceil(backgroundImages.length / 3)
   const currentPageImages = backgroundImages.slice(currentPage * 3, (currentPage * 3) + 3)
 
-  // Helper to reset auto-switch timer
-  const resetAutoSwitch = () => {
-    if (autoSwitchTimerRef.current) {
-      clearInterval(autoSwitchTimerRef.current)
-    }
-    if (totalPages > 1) {
-      autoSwitchTimerRef.current = setInterval(() => {
-        setCurrentPage((prev) => (prev + 1) % totalPages)
-      }, 3000)
-    }
-  }
+  // No useEffect needed - using static demo images
 
-  useEffect(() => {
-    // Load images immediately
-    loadBackgroundImages()
-    
-    // Listen for custom event from WorkGallery component
-    const handleCustomStorage = () => {
-      loadBackgroundImages()
-    }
-    window.addEventListener('workGalleryUpdated', handleCustomStorage)
-
-    return () => {
-      window.removeEventListener('workGalleryUpdated', handleCustomStorage)
-    }
-  }, [])
-
-
-  // Auto-switch pages every 3 seconds
-  useEffect(() => {
-    resetAutoSwitch()
-    return () => {
-      if (autoSwitchTimerRef.current) {
-        clearInterval(autoSwitchTimerRef.current)
-      }
-    }
-  }, [totalPages])
-
-  // Handle keyboard and touch navigation
+  // Handle keyboard and touch navigation (no auto-switch)
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (totalPages <= 1) return
       
       if (e.key === 'ArrowLeft' && currentPage > 0) {
         setCurrentPage(prev => prev - 1)
-        resetAutoSwitch()
       } else if (e.key === 'ArrowRight' && currentPage < totalPages - 1) {
         setCurrentPage(prev => prev + 1)
-        resetAutoSwitch()
       }
     }
 
@@ -109,10 +114,8 @@ const HeroSection = () => {
 
       if (swipeDistance > minSwipeDistance && currentPage < totalPages - 1) {
         setCurrentPage(prev => prev + 1)
-        resetAutoSwitch()
       } else if (swipeDistance < -minSwipeDistance && currentPage > 0) {
         setCurrentPage(prev => prev - 1)
-        resetAutoSwitch()
       }
     }
 
@@ -139,8 +142,8 @@ const HeroSection = () => {
         isCollapsed ? 'min-h-[200px]' : 'min-h-screen'
       }`}
     >
-      {/* Background Images - 3 per page with auto-switch */}
-      {!imagesLoading && backgroundImages.length > 0 && (
+      {/* Background Images - 3 per page, manual navigation only */}
+      {backgroundImages.length > 0 && (
         <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
           <div className="flex items-center justify-center h-full gap-4 px-4">
             {currentPageImages.map((img, index) => (
@@ -170,10 +173,7 @@ const HeroSection = () => {
               {Array.from({ length: totalPages }).map((_, index) => (
                 <button
                   key={index}
-                  onClick={() => {
-                    setCurrentPage(index)
-                    resetAutoSwitch()
-                  }}
+                  onClick={() => setCurrentPage(index)}
                   className={`w-2 h-2 rounded-full transition-all duration-300 ${
                     index === currentPage 
                       ? 'bg-pink-500 w-8' 
