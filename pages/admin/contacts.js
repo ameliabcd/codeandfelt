@@ -9,6 +9,11 @@ export default function ContactsAdmin() {
 
   useEffect(() => {
     loadContacts()
+    // Auto-refresh every 5 seconds
+    const interval = setInterval(() => {
+      loadContacts()
+    }, 5000)
+    return () => clearInterval(interval)
   }, [])
 
   const loadContacts = async () => {
@@ -73,7 +78,8 @@ export default function ContactsAdmin() {
 
           {!loading && !error && contacts.length === 0 && (
             <div className="text-center py-12 bg-white rounded-lg">
-              <p className="text-gray-600">No contact submissions yet.</p>
+              <p className="text-gray-600 mb-2">No contact submissions yet.</p>
+              <p className="text-sm text-gray-500">Submissions will appear here automatically. Page refreshes every 5 seconds.</p>
             </div>
           )}
 

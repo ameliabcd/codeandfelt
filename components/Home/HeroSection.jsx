@@ -69,28 +69,87 @@ const DEMO_IMAGES = [
 ]
 
 const HeroSection = () => {
-  const [backgroundImages, setBackgroundImages] = useState(DEMO_IMAGES) // Start with demo images
-  const scrollContainerRef = useRef(null)
+  const [backgroundImages, setBackgroundImages] = useState(DEMO_IMAGES)
+  const [currentPage, setCurrentPage] = useState(0)
+  const sectionRef = useRef(null)
+  const lastMouseX = useRef(0)
+  const mouseMoveTimeout = useRef(null)
+
+  // Calculate total pages (3 images per page)
+  const totalPages = Math.ceil(backgroundImages.length / 3)
+  const currentPageImages = backgroundImages.slice(currentPage * 3, (currentPage * 3) + 3)
+
+  // Handle mouse movement for page navigation
+  useEffect(() => {
+    if (totalPages <= 1) return
+
+    let isInitialized = false
+    
+    const handleMouseMove = (e) => {
+      if (!sectionRef.current) return
+      
+      const currentX = e.clientX
+      
+      // Initialize on first move
+      if (!isInitialized) {
+        lastMouseX.current = currentX
+        isInitialized = true
+        return
+      }
+      
+      const previousX = lastMouseX.current
+      const threshold = 100 // Minimum movement to trigger page change
+      const movement = currentX - previousX
+      
+      // Clear any existing timeout
+      if (mouseMoveTimeout.current) {
+        clearTimeout(mouseMoveTimeout.current)
+      }
+      
+      // Only trigger if mouse moved significantly
+      if (Math.abs(movement) > threshold) {
+        if (movement < 0 && currentPage < totalPages - 1) {
+          // Mouse moved left - go to next page
+          setCurrentPage(prev => Math.min(prev + 1, totalPages - 1))
+          lastMouseX.current = currentX
+        } else if (movement > 0 && currentPage > 0) {
+          // Mouse moved right - go to previous page
+          setCurrentPage(prev => Math.max(prev - 1, 0))
+          lastMouseX.current = currentX
+        }
+      }
+      
+      // Update last position after a delay to prevent rapid switching
+      mouseMoveTimeout.current = setTimeout(() => {
+        lastMouseX.current = currentX
+      }, 500)
+    }
+
+    const section = sectionRef.current
+    if (section) {
+      section.addEventListener('mousemove', handleMouseMove)
+      return () => {
+        section.removeEventListener('mousemove', handleMouseMove)
+        if (mouseMoveTimeout.current) {
+          clearTimeout(mouseMoveTimeout.current)
+        }
+      }
+    }
+  }, [currentPage, totalPages])
 
   return (
     <section 
+      ref={sectionRef}
       className="relative overflow-hidden transition-all duration-500 ease-in-out min-h-screen"
     >
-      {/* Background Images - Horizontal scrollable */}
+      {/* Background Images - Mouse movement navigation */}
       {backgroundImages.length > 0 && (
-        <div className="absolute inset-0 z-0 overflow-x-auto overflow-y-hidden">
-          <div 
-            ref={scrollContainerRef}
-            className="flex items-start h-full gap-2 px-4 pt-0"
-            style={{
-              scrollbarWidth: 'thin',
-              scrollbarColor: '#f9a8d4 transparent',
-            }}
-          >
-            {backgroundImages.map((img, index) => (
+        <div className="absolute inset-0 z-0 overflow-hidden">
+          <div className="flex items-start justify-center h-full gap-2 px-4 pt-0">
+            {currentPageImages.map((img, index) => (
               <div
-                key={`hero-bg-${img.id}`}
-                className="relative flex-shrink-0 w-80 h-full opacity-[0.25] hover:opacity-[0.35] transition-all duration-500 pointer-events-none"
+                key={`hero-bg-${img.id}-${currentPage}`}
+                className="relative w-full max-w-md h-full opacity-[0.25] hover:opacity-[0.35] transition-all duration-500 pointer-events-none"
                 style={{
                   animation: 'fadeIn 0.5s ease-in',
                 }}
